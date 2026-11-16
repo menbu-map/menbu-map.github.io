@@ -105,7 +105,7 @@ async function llm(system,user,maxTokens){
 function pickJson(text){ var m=String(text||"").match(/\{[\s\S]*\}/); try{ return m?JSON.parse(m[0]):null; }catch(e){ return null; } }
 async function geocode(q){
   try{
-    var r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=jp&accept-language=ja&bounded=1&viewbox=139.3,45.6,145.9,41.3&q="+encodeURIComponent(q),{headers:{"user-agent":"menbu-map/1.0 (START RIGHT)"}});
+    var r=await fetch("https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=jp&accept-language=ja&viewbox=139.3,45.6,145.9,41.3&q="+encodeURIComponent(q),{headers:{"user-agent":"menbu-map/1.0 (START RIGHT)"}});
     var j=r.ok?await r.json():[];
     if(j.length){ return {lat:+j[0].lat,lon:+j[0].lon}; }
   }catch(e){}
@@ -165,7 +165,9 @@ async function hpNear(key,lat,lon,r){
   var seen={}, out=[];
   lists.forEach(function(arr,li){
     arr.forEach(function(s){
-      if(seen[s.id]){ return; } seen[s.id]=1;
+      if(seen[s.id]){ return; }
+      if(li>0&&!/そば|蕎麦|ソバ|うどん|饂飩|ウドン|麺/.test(String(s.name||""))){ return; }
+      seen[s.id]=1;
       var la=Number(s.lat), lo=Number(s.lng);
       if(!Number.isFinite(la)||!Number.isFinite(lo)){ return; }
       out.push({name:String(s.name||"").slice(0,60),lat:la,lon:lo,kind:li===0?"ラーメン":(li===1?"そば":"うどん"),genre:(s.genre&&s.genre.name)||"",uri:(s.urls&&s.urls.pc)||""});
@@ -217,7 +219,7 @@ Deno.serve(async function(req){
     if(sp.get("near")){
       if(!origin||!ORIGIN_RE.test(origin)){ return reply(origin,403,{error:"origin"}); }
       var nla=Number(sp.get("lat")), nlo=Number(sp.get("lon")), nr=Number(sp.get("r"))||1000;
-      if(!(nla>41&&nla<46&&nlo>139&&nlo<146.5)){ return reply(origin,400,{error:"where"}); }
+      if(!(nla>20&&nla<46.5&&nlo>122&&nlo<154.5)){ return reply(origin,400,{error:"where"}); }
       try{
         var nk=await hotpepperKey();
         if(!nk){ return reply(origin,503,{error:"setup"}); }

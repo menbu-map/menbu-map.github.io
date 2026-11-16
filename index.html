@@ -155,7 +155,7 @@ li.menbu{border-left-color:var(--shu)}
 <div class="ov">
   <form id="find" class="sbar" role="search">
     <label for="q" class="vh">場所・麺・店名</label>
-    <input id="q" type="search" enterkeyhint="search" autocomplete="off" placeholder="札幌駅 つけ麺／店名">
+    <input id="q" type="search" enterkeyhint="search" autocomplete="off" placeholder="博多 豚骨／札幌駅 つけ麺">
     <button type="submit" id="go" class="sgo" aria-label="探す"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
     <button type="button" id="aiopen" class="saibtn" aria-controls="aipanel" aria-expanded="false">麺AI</button>
   </form>
@@ -207,7 +207,7 @@ li.menbu{border-left-color:var(--shu)}
   <div class="wcard">
     <div class="badge"><svg class="crest" viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="cc"><circle cx="50" cy="50" r="33"/></clipPath></defs><circle cx="50" cy="50" r="44" fill="none" stroke="#141414" stroke-width="9"/><g clip-path="url(#cc)"><rect width="100" height="100" fill="#141414"/><g fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round"><path d="M8 37 q10.5 -9 21 0 t21 0 t21 0 t21 0"/><path d="M8 51 q10.5 -9 21 0 t21 0 t21 0 t21 0"/><path d="M8 65 q10.5 -9 21 0 t21 0 t21 0 t21 0"/></g><g stroke-linecap="round"><path d="M66 10 L45 92" stroke="#141414" stroke-width="8"/><path d="M76 13 L55 95" stroke="#141414" stroke-width="8"/><path d="M66 10 L45 92" stroke="#fff" stroke-width="3.2"/><path d="M76 13 L55 95" stroke="#fff" stroke-width="3.2"/></g></g></svg><p class="wt">麺部</p></div>
     <p class="en">MENBU MAP</p>
-    <p>近くの麺の店を地図で探します。朱色の印は、麺部のLINEに上がった店です。</p>
+    <p>全国の麺の店を地図で探します。朱色の印は、麺部のLINEに上がった店です。</p>
     <button type="button" id="wgo" class="wgo">現在地から探す</button>
     <button type="button" id="wskip" class="wskip">地図だけ見る</button>
   </div>
@@ -578,7 +578,7 @@ Array.prototype.forEach.call(document.querySelectorAll(".chip[data-kw]"),functio
   });
 });
 function geocode(q){
-  var u="https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=jp&accept-language=ja&bounded=1&viewbox=139.3,45.6,145.9,41.3&q="+encodeURIComponent(q);
+  var u="https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=jp&accept-language=ja&viewbox=139.3,45.6,145.9,41.3&q="+encodeURIComponent(q);
   return fetch(u).then(function(r){ return r.json(); }).then(function(j){
     if(j && j.length){ return {lat:+j[0].lat,lon:+j[0].lon}; }
     throw new Error("none");
@@ -657,7 +657,6 @@ document.getElementById("find").addEventListener("submit",function(ev){
   if(!place){ kw=foods.join(" "); if(last){ search(last.lat,last.lon,last.showMe,lastR,false); } else { here(); } return; }
   statusEl.textContent="「"+place+"」を探しています…"; setSheet("peek");
   geocode(place).then(function(g){
-    if(!inHokkaido(g.lat,g.lon)&&!/[都道府県市区町村駅]/.test(place)){ throw new Error("far"); }
     kw=foods.join(" "); search(g.lat,g.lon,false,1000,true);
   }).catch(function(){
     kw=text; render(lastState==="init"?"init":"ok");
