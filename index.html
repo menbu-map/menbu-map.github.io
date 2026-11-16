@@ -103,6 +103,11 @@ footer p{margin:0 0 4px}
 .gmark{font-family:Roboto,Arial,sans-serif;font-size:12px;color:#5f6368}
 .pop .gbtn{display:inline-block;margin-top:6px;font-weight:700;color:#141414;border:1.5px solid #141414;border-radius:4px;padding:5px 8px;text-decoration:none}
 [hidden]{display:none!important}
+.aifab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:3000;font:inherit;font-size:15px;font-weight:700;color:#fff;background:var(--sumi);border:2px solid #fff;border-radius:999px;padding:12px 18px;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.aifab.drag{cursor:grabbing;opacity:.85}
+.aipanel{position:fixed;z-index:3001;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));width:min(480px,calc(100vw - 24px));max-height:min(78vh,640px);overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.aihead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.aiclose{font:inherit;font-size:24px;line-height:1;width:40px;height:40px;border:0;background:transparent;color:var(--ink);cursor:pointer}
 .tabs{position:sticky;top:0;z-index:1000;display:flex;background:var(--sumi);border-top:1px solid #333}
 .tabs button{flex:1 1 0;font:inherit;font-size:16px;font-weight:700;letter-spacing:.08em;padding:12px 8px;border:0;background:transparent;color:#bdbab2;cursor:pointer;border-bottom:4px solid transparent}
 .tabs button[aria-selected="true"]{color:#fff;border-bottom-color:#fff}
@@ -120,19 +125,6 @@ footer p{margin:0 0 4px}
   <button type="button" role="tab" id="tab-shop" aria-controls="pane-shop" aria-selected="false">【SHOP】</button>
 </nav>
 <div class="wrap" id="pane-map" role="tabpanel" aria-labelledby="tab-map">
-  <section class="ai">
-    <h2>麺部AIに聞く</h2>
-    <form id="aiform">
-      <label for="aiq" class="vh">質問</label>
-      <textarea id="aiq" rows="2" placeholder="例：札幌駅の近くで、つけ麺がおいしい店は？"></textarea>
-      <div class="airow">
-        <button type="submit" id="aigo">聞く</button>
-      </div>
-    </form>
-    <p id="aistatus" aria-live="polite"></p>
-    <div id="aiout"></div>
-    <p id="gattr" class="gattr" hidden>未開拓の店の情報：Powered by <a href="https://webservice.recruit.co.jp/" target="_blank" rel="noopener">ホットペッパーグルメ Webサービス</a></p>
-  </section>
   <form id="find" class="find">
     <label for="place">場所<input id="place" type="text" autocomplete="off" placeholder="例：札幌駅、麻生、すすきの"></label>
     <label for="kw">麺・店名<input id="kw" type="text" autocomplete="off" placeholder="例：つけ麺、味噌、そば"></label>
@@ -182,6 +174,20 @@ footer p{margin:0 0 4px}
   </section>
   <p id="shopnone" class="shopnone">いま受付中の商品はありません。</p>
 </div>
+<button type="button" id="aifab" class="aifab" aria-controls="aipanel" aria-expanded="false">困ったら麺AI</button>
+  <section class="ai aipanel" id="aipanel" role="dialog" aria-modal="false" aria-labelledby="aih" hidden>
+    <div class="aihead"><h2 id="aih">麺部AIに聞く</h2><button type="button" id="aiclose" class="aiclose" aria-label="閉じる">×</button></div>
+    <form id="aiform">
+      <label for="aiq" class="vh">質問</label>
+      <textarea id="aiq" rows="2" placeholder="例：札幌駅の近くで、つけ麺がおいしい店は？"></textarea>
+      <div class="airow">
+        <button type="submit" id="aigo">聞く</button>
+      </div>
+    </form>
+    <p id="aistatus" aria-live="polite"></p>
+    <div id="aiout"></div>
+    <p id="gattr" class="gattr" hidden>未開拓の店の情報：Powered by <a href="https://webservice.recruit.co.jp/" target="_blank" rel="noopener">ホットペッパーグルメ Webサービス</a></p>
+  </section>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
 // [表示名, メモ, 照合キー, 完全一致で照合するか(1/0), 地域 h=北海道 o=道外]
@@ -764,6 +770,35 @@ fetch("https://uvdodybrxmllldazdtbu.supabase.co/functions/v1/menbu-ask?shops=1")
   tm.addEventListener("click",function(){ show(false,true); });
   tsb.addEventListener("click",function(){ show(true,true); });
   if(location.hash==="#shop"){ show(true,false); }
+})();
+
+// 困ったら麺AI：右下のボタン（ドラッグで移動、位置は覚える）。押すとAIの窓が開く
+(function(){
+  var fab=document.getElementById("aifab"), pn=document.getElementById("aipanel"), KEY="menbu_aifab_pos";
+  function clamp(x,y){ var w=fab.offsetWidth, h=fab.offsetHeight; return [Math.min(Math.max(4,x),window.innerWidth-w-4),Math.min(Math.max(4,y),window.innerHeight-h-4)]; }
+  function place(x,y){ var c=clamp(x,y); fab.style.left=c[0]+"px"; fab.style.top=c[1]+"px"; fab.style.right="auto"; fab.style.bottom="auto"; return c; }
+  try{ var sv=JSON.parse(localStorage.getItem(KEY)||"null"); if(sv&&isFinite(sv[0])&&isFinite(sv[1])){ place(sv[0]*window.innerWidth,sv[1]*window.innerHeight); } }catch(e){}
+  window.addEventListener("resize",function(){ if(fab.style.left){ place(parseFloat(fab.style.left),parseFloat(fab.style.top)); } });
+  function open(){ pn.hidden=false; fab.hidden=true; fab.setAttribute("aria-expanded","true"); var q=document.getElementById("aiq"); if(q&&window.matchMedia("(pointer:fine)").matches){ q.focus(); } }
+  function close(){ pn.hidden=true; fab.hidden=false; fab.setAttribute("aria-expanded","false"); fab.focus(); }
+  var st=null;
+  fab.addEventListener("pointerdown",function(e){ var r=fab.getBoundingClientRect(); st={x:e.clientX,y:e.clientY,ox:e.clientX-r.left,oy:e.clientY-r.top,moved:false}; try{ fab.setPointerCapture(e.pointerId); }catch(_){} });
+  fab.addEventListener("pointermove",function(e){
+    if(!st){ return; }
+    if(!st.moved&&Math.abs(e.clientX-st.x)+Math.abs(e.clientY-st.y)<8){ return; }
+    st.moved=true; fab.classList.add("drag"); place(e.clientX-st.ox,e.clientY-st.oy);
+  });
+  function end(){
+    if(!st){ return; }
+    var moved=st.moved; st=null; fab.classList.remove("drag");
+    if(moved){ try{ localStorage.setItem(KEY,JSON.stringify([parseFloat(fab.style.left)/window.innerWidth,parseFloat(fab.style.top)/window.innerHeight])); }catch(e){} }
+    else{ open(); }
+  }
+  fab.addEventListener("pointerup",end);
+  fab.addEventListener("pointercancel",function(){ st=null; fab.classList.remove("drag"); });
+  fab.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); open(); } });
+  document.getElementById("aiclose").addEventListener("click",close);
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!pn.hidden){ close(); } });
 })();
 </script>
 </body>
