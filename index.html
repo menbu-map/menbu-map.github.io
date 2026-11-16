@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>麺部マップ 近くの麺</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3CclipPath%20id%3D%22cc%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2233%22/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2244%22%20fill%3D%22none%22%20stroke%3D%22%23141414%22%20stroke-width%3D%229%22/%3E%3Cg%20clip-path%3D%22url%28%23cc%29%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23141414%22/%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%224.5%22%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M8%2037%20q10.5%20-9%2021%200%20t21%200%20t21%200%20t21%200%22/%3E%3Cpath%20d%3D%22M8%2051%20q10.5%20-9%2021%200%20t21%200%20t21%200%20t21%200%22/%3E%3Cpath%20d%3D%22M8%2065%20q10.5%20-9%2021%200%20t21%200%20t21%200%20t21%200%22/%3E%3C/g%3E%3Cg%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M66%2010%20L45%2092%22%20stroke%3D%22%23141414%22%20stroke-width%3D%228%22/%3E%3Cpath%20d%3D%22M76%2013%20L55%2095%22%20stroke%3D%22%23141414%22%20stroke-width%3D%228%22/%3E%3Cpath%20d%3D%22M66%2010%20L45%2092%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223.2%22/%3E%3Cpath%20d%3D%22M76%2013%20L55%2095%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223.2%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Yuji+Boku&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+/* 墨と白の家紋調。朱は麺部の店の印だけに使う。 */
+:root{--bg:#f6f5f1;--card:#fff;--ink:#141414;--sub:#5c5c5c;--line:#d9d7d0;--sumi:#141414;--shu:#c8321e;--chip:#ecebe6;color-scheme:light;
+  --brush:"Yuji Boku","Yuji Syuku","Hiragino Mincho ProN","Yu Mincho",serif;
+  --body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic","Noto Sans JP",system-ui,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6}
+header.top{background:var(--sumi);color:#fff;padding:26px 16px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.badge{width:172px;height:172px;border-radius:50%;background:#fff;color:var(--sumi);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.crest{width:84px;height:84px;display:block}
+h1{margin:0;font-family:var(--brush);font-weight:400;font-size:38px;line-height:1.1;letter-spacing:.12em;padding-left:.12em}
+.en{margin:0;font-size:13px;font-weight:700;letter-spacing:.42em;padding-left:.42em}
+.lead{margin:0;font-size:14px;color:#d8d6cf;max-width:34em}
+.wrap{max-width:760px;margin:0 auto;padding:16px 16px 40px;display:flex;flex-direction:column;gap:12px}
+.ai{background:var(--card);border:2px solid var(--sumi);border-radius:4px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.ai h2{margin:0;font-family:var(--brush);font-weight:400;font-size:22px}
+.ai form{display:flex;flex-direction:column;gap:8px}
+.ai textarea{font:inherit;font-size:16px;padding:9px 10px;border:1px solid var(--sumi);border-radius:4px;width:100%;resize:vertical;background:var(--card);color:var(--ink)}
+.airow{display:flex;gap:8px;align-items:flex-end;justify-content:flex-end}
+.airow label{flex:1 1 auto;display:flex;flex-direction:column;gap:2px;font-size:13px;font-weight:700}
+.airow input{font:inherit;font-size:16px;font-weight:400;padding:9px 10px;border:1px solid var(--sumi);border-radius:4px;min-width:0;width:100%}
+.airow button{flex:0 0 auto;font:inherit;font-size:16px;font-weight:700;border-radius:4px;padding:10px 22px;cursor:pointer;border:2px solid var(--sumi);background:var(--sumi);color:#fff}
+.airow button:disabled{opacity:.5;cursor:default}
+#aistatus{margin:0;font-size:14px;color:var(--sub)}
+#aistatus:empty{display:none}
+#aiout{display:flex;flex-direction:column;gap:8px}
+#aiout:empty{display:none}
+.ailead{margin:0;font-weight:700}
+.aicard{border:1px solid var(--line);border-left:5px solid var(--sumi);border-radius:4px;padding:10px 12px;display:flex;flex-direction:column;gap:5px}
+.aicard.menbu{border-left-color:var(--shu)}
+.aicard p{margin:0;font-size:14px;overflow-wrap:anywhere}
+.aicard .name{font-size:20px}
+.aicard a{align-self:flex-start;font-size:14px;font-weight:700;border-radius:4px;padding:7px 12px;border:1px solid var(--sumi);color:var(--sumi);text-decoration:none}
+.gattr{margin:0;font-size:12px;color:var(--sub)}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.find{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
+.find label{display:flex;flex-direction:column;gap:2px;font-size:13px;font-weight:700}
+.find input{font:inherit;font-size:16px;font-weight:400;padding:9px 10px;border:1px solid var(--sumi);border-radius:4px;background:var(--card);color:var(--ink);min-width:0;width:100%}
+.find button{grid-column:1 / -1;font:inherit;font-size:16px;font-weight:700;border-radius:4px;padding:11px 14px;cursor:pointer;border:2px solid var(--sumi);background:var(--sumi);color:#fff}
+.find button:disabled{opacity:.5;cursor:default}
+.tag.n{background:transparent;border:1px dashed var(--sub);color:var(--sub)}
+#map{height:46vh;min-height:280px;border:2px solid var(--sumi);border-radius:4px;background:var(--chip);z-index:0}
+.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ctl button{font:inherit;font-size:15px;font-weight:700;border-radius:4px;padding:10px 14px;cursor:pointer;border:2px solid var(--sumi)}
+#here{background:var(--card);color:var(--sumi)}
+#center{background:var(--card);color:var(--sumi)}
+.ctl button:disabled{opacity:.5;cursor:default}
+.ctl select{font:inherit;font-size:15px;padding:9px 8px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--ink)}
+.ctl label{display:flex;gap:6px;align-items:center;font-size:14px}
+button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--shu);outline-offset:2px}
+#status{margin:0;font-size:14px;color:var(--sub);min-height:1.6em}
+ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+li{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--sumi);border-radius:4px;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+li.menbu{border-left-color:var(--shu)}
+.top2{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.name{margin:0;font-family:var(--brush);font-size:20px;line-height:1.35;overflow-wrap:anywhere}
+.dist{flex:0 0 auto;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+.meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;font-size:13px}
+.tag{background:var(--chip);border-radius:2px;padding:1px 8px;font-weight:700}
+.tag.m{background:var(--shu);color:#fff}
+.note{margin:0;font-size:14px;overflow-wrap:anywhere}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.acts a,.acts button{font:inherit;font-size:14px;font-weight:700;border-radius:4px;padding:7px 12px;border:1px solid var(--sumi);background:transparent;color:var(--sumi);text-decoration:none;cursor:pointer}
+footer{font-size:12px;color:var(--sub);border-top:1px solid var(--line);padding-top:10px}
+footer p{margin:0 0 4px}
+.pop b{font-size:14px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="badge"><svg class="crest" viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="cc"><circle cx="50" cy="50" r="33"/></clipPath></defs><circle cx="50" cy="50" r="44" fill="none" stroke="#141414" stroke-width="9"/><g clip-path="url(#cc)"><rect width="100" height="100" fill="#141414"/><g fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round"><path d="M8 37 q10.5 -9 21 0 t21 0 t21 0 t21 0"/><path d="M8 51 q10.5 -9 21 0 t21 0 t21 0 t21 0"/><path d="M8 65 q10.5 -9 21 0 t21 0 t21 0 t21 0"/></g><g stroke-linecap="round"><path d="M66 10 L45 92" stroke="#141414" stroke-width="8"/><path d="M76 13 L55 95" stroke="#141414" stroke-width="8"/><path d="M66 10 L45 92" stroke="#fff" stroke-width="3.2"/><path d="M76 13 L55 95" stroke="#fff" stroke-width="3.2"/></g></g></svg><h1>麺部</h1></div>
+  <p class="en">MENBU MAP</p>
+  <p class="lead">いまいる場所の近くで麺の店を探します。朱色の印は、麺部のLINEに上がった店です。</p>
+</header>
+<div class="wrap">
+  <section class="ai">
+    <h2>麺部AIに聞く</h2>
+    <form id="aiform">
+      <label for="aiq" class="vh">質問</label>
+      <textarea id="aiq" rows="2" placeholder="例：札幌駅の近くで、つけ麺がおいしい店は？"></textarea>
+      <div class="airow">
+        <button type="submit" id="aigo">聞く</button>
+      </div>
+    </form>
+    <p id="aistatus" aria-live="polite"></p>
+    <div id="aiout"></div>
+    <p id="gattr" class="gattr" hidden>未開拓の店の情報：Powered by <a href="https://webservice.recruit.co.jp/" target="_blank" rel="noopener">ホットペッパーグルメ Webサービス</a></p>
+  </section>
+  <form id="find" class="find">
+    <label for="place">場所<input id="place" type="text" autocomplete="off" placeholder="例：札幌駅、麻生、すすきの"></label>
+    <label for="kw">麺・店名<input id="kw" type="text" autocomplete="off" placeholder="例：つけ麺、味噌、そば"></label>
+    <button type="submit" id="go">この条件で探す</button>
+  </form>
+  <div id="map" role="application" aria-label="地図"></div>
+  <div class="ctl">
+    <button type="button" id="here">現在地から探す</button>
+    <button type="button" id="center">地図の中心で探す</button>
+    <label for="rad">範囲
+      <select id="rad">
+        <option value="500">500m</option>
+        <option value="1000" selected>1km</option>
+        <option value="2000">2km</option>
+        <option value="5000">5km</option>
+      </select>
+    </label>
+    <label for="only"><input type="checkbox" id="only">巡礼の店だけ（麺部の投稿がある店）</label>
+  </div>
+  <p id="status" aria-live="polite">朱色の印は麺部の店です。「現在地から探す」を押すと近い順に並びます。</p>
+  <ul id="list"></ul>
+  <footer>
+    <p>地図：国土地理院。麺部の店のうち位置を確認できた24軒は、いつでも朱色の印で表示します。</p>
+    <p>それ以外の店の位置はOpenStreetMapの登録データです。登録されていない店は表示されません。</p>
+    <p>麺部AIは、質問に合う店を候補から選んで答えます。「巡礼の店だけ」にチェックすると、麺部の投稿がある店だけから答えます。「現在地から探す」を押したあとは、現在地からの距離も踏まえます。</p>
+    <p>「未開拓」は、まだ麺部の投稿がない店です。キーワードは店名・ジャンル・麺部のメモに含まれる言葉で探します。評価や営業時間は出ません。</p>
+    <p>麺部の店かどうかは店名の一致で判定しています。同じ名前の別の店に朱色の印がつくことがあります。</p>
+  </footer>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+// [表示名, メモ, 照合キー, 完全一致で照合するか(1/0), 地域 h=北海道 o=道外]
+var MENBU = [
+ ["HACHI 札幌時計台本店","",["hachi"],0,"h"],
+ ["幸村","",["幸村"],1,"h"],
+ ["札幌中華 すすきの亭","汁無し担々麺",["すすきの亭"],0,"h"],
+ ["狼スープ","",["狼スープ"],0,"h"],
+ ["麺や椒","",["椒"],1,"h"],
+ ["そば処たか松","",["たか松"],0,"h"],
+ ["叶庵","鶏もつそば",["叶庵"],1,"h"],
+ ["麺鍾馗","",["鍾馗"],0,"h"],
+ ["福の樹","エビカレーヌードル",["福の樹"],0,"h"],
+ ["メディスン麺","赤麺（辛さの入門）",["メディスン"],0,"h"],
+ ["石岡","カレー南蕎麦、大きなゴボ天",["石岡"],1,"h"],
+ ["木蓮","味噌",["木蓮"],1,"h"],
+ ["とぐち","",["とぐち"],1,"h"],
+ ["レストラン太郎","あんかけ焼きそば",["レストラン太郎"],0,"h"],
+ ["思君楼","そば",["思君楼"],0,"h"],
+ ["初代","醤油ラーメン",["初代"],1,"h"],
+ ["梅光軒","特製醤油",["梅光軒"],0,"h"],
+ ["支那そば 鋳","期間限定の冷たい味噌",["鋳"],1,"h"],
+ ["麺Style三嶋","",["三嶋"],1,"h"],
+ ["hide","ピリ辛白菜にきくらげ",["hide"],1,"h"],
+ ["つけめん しんちゃん","",["しんちゃん"],1,"h"],
+ ["鶏白湯ラーメン 白鶏舎","",["白鶏舎"],0,"h"],
+ ["ラーメン木曜日","煮干し正油",["木曜日"],0,"h"],
+ ["麺屋 翔","",["翔"],1,"h"],
+ ["飛燕","",["飛燕"],1,"h"],
+ ["麵や きさ乃","",["きさ乃"],0,"h"],
+ ["きちりん","わんぱくセット",["きちりん"],0,"h"],
+ ["けせらせら","辛味噌らーめん",["けせらせら"],0,"h"],
+ ["米風亭","油そば",["米風亭"],0,"h"],
+ ["麺処 四代目ゆうじ","",["四代目ゆうじ"],0,"h"],
+ ["一鶴","ちゃんぽん",["一鶴"],1,"h"],
+ ["麺屋 高橋","つけ麺",["高橋"],1,"h"],
+ ["花丸ラーメン","",["花丸"],1,"h"],
+ ["大公","味噌",["大公"],1,"h"],
+ ["廣瀬商店","つけ麺",["廣瀬商店"],0,"h"],
+ ["ODD","",["odd"],1,"h"],
+ ["嶋や","",["嶋や"],1,"h"],
+ ["しまや","",["しまや"],1,"h"],
+ ["勝盛軒","辛いラーメン",["勝盛軒"],0,"h"],
+ ["つけしゃぶ さとう","きしめん",["つけしゃぶ"],0,"h"],
+ ["手打ち蕎麦 香助","",["香助"],1,"h"],
+ ["らーめん小屋 歩","和だし醤油",["歩"],1,"h"],
+ ["ダックラーメン・エイジ","特製 鴨塩",["ダックラーメン"],0,"h"],
+ ["しゅん香","",["しゅん香"],0,"h"],
+ ["満龍","",["満龍"],1,"h"],
+ ["常","焼ねぎ醤油",["常"],1,"h"],
+ ["志の家","",["志の家"],0,"h"],
+ ["幡龍","",["幡龍"],1,"h"],
+ ["169","芳醇醤油",["169"],1,"h"],
+ ["一楽","辛味噌",["一楽"],1,"h"],
+ ["とんき","ひれかつラーメン",["とんき"],1,"h"],
+ ["りん","",["りん"],1,"h"],
+ ["かどや","",["かどや"],1,"h"],
+ ["あさひや","",["あさひや"],1,"h"],
+ ["そば扇","天丼と蕎麦のセット",["そば扇"],0,"h"],
+ ["青竜","",["青竜"],1,"h"],
+ ["一歩","",["一歩"],1,"h"],
+ ["福住","",["福住"],1,"h"],
+ ["縁","",["縁"],1,"h"],
+ ["雪洞（ぼんぼり）","鰊醤油ラーメン",["雪洞","ぼんぼり"],0,"h"],
+ ["よしちゃん","",["よしちゃん"],1,"h"],
+ ["そば処 一粒","",["一粒"],1,"h"],
+ ["桔梗や","",["桔梗や"],0,"h"],
+ ["らーめん専門店 ささき","",["ささき"],1,"h"],
+ ["トリス軒","",["トリス軒"],0,"o"],
+ ["平和軒","",["平和軒"],0,"o"],
+ ["やっこ","",["やっこ"],1,"o"],
+ ["一番軒","海老豚骨ラーメン",["一番軒"],0,"o"],
+ ["仙台中華そば銘店 嘉一","",["嘉一"],0,"o"],
+ ["青島食堂","",["青島食堂"],0,"o"],
+ ["つけ麺 民民","",["民民"],1,"o"],
+ ["おっくん堂","",["おっくん堂"],0,"o"],
+ ["おか田","",["おか田"],1,"o"],
+ ["味仙","台湾ラーメン",["味仙"],1,"o"],
+ ["神虎","博多豚骨",["神虎"],1,"o"],
+ ["すばや 大和","",["すばや大和"],0,"o"]
+];
+// 位置を確認できた麺部の店（MENBUの番号, 緯度, 経度）。外部サーバーが止まっていても表示する
+var SEEDS = [[0,43.062504,141.353851],[1,43.055187,141.352646],[2,43.056427,141.356827],[3,43.046557,141.357337],[4,43.051092,141.354661],[6,43.044788,141.375656],[8,43.054134,141.343001],[9,43.119373,141.348923],[11,43.074932,141.276459],[12,43.055808,141.351834],[14,42.903275,141.579697],[22,43.048597,141.337363],[25,43.070265,141.333299],[27,43.130668,141.355018],[31,43.012121,141.420278],[41,43.099463,141.402868],[44,43.053405,141.354089],[48,43.038968,141.347171],[62,43.423504,141.884471],[5,43.045885,141.356630],[13,43.144699,141.146133],[24,43.023470,141.356794],[33,43.057224,141.350433],[38,43.121273,141.314941]];
+var SEEDSET = {}; SEEDS.forEach(function(s){ SEEDSET[s[0]]=s; });
+var ENDPOINTS = ["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://overpass.private.coffee/api/interpreter"];
+var NOODLE_WORDS = "ラーメン|らーめん|らぁ麺|らあめん|拉麺|麺|麵|そば|蕎麦|うどん";
+var NOODLE_RE = new RegExp(NOODLE_WORDS);
+var CUISINE_RE = /ramen|noodle|soba|udon|champon|tsukemen/;
+
+function norm(s){
+  return String(s||"").normalize("NFKC").toLowerCase().replace(/[\s　・･\-‐－―ー'’.．,，()（）「」]/g,"");
+}
+var PRE = ["らーめん専門店","らーめん小屋","鶏白湯ラーメン","仙台中華そば銘店","手打ち蕎麦","手打ちそば","ラーメン","らーめん","らぁめん","らぁ麺","中華そば","支那そば","そば処","つけ麺","つけめん","麺style","麺屋","麺や","麵や","麺処","麺","レストラン"].map(norm);
+var SUF = ["ラーメン","らーめん","そば","蕎麦","うどん","食堂"].map(norm);
+function cores(n){
+  var out=[n], p=n, i;
+  for(i=0;i<PRE.length;i++){ if(p.indexOf(PRE[i])===0 && p.length>PRE[i].length){ p=p.slice(PRE[i].length); break; } }
+  out.push(p);
+  var q=p.replace(/(総本店|本店)$/,"")||p;
+  out.push(q);
+  if(/店$/.test(p)){ for(var k=2;k<=8;k++){ if(p.length>k+1){ out.push(p.slice(0,p.length-k-1)); } } }
+  for(i=0;i<SUF.length;i++){
+    var s=SUF[i];
+    if(q.length>s.length && q.lastIndexOf(s)===q.length-s.length){ out.push(q.slice(0,q.length-s.length)); }
+    if(n.length>s.length && n.lastIndexOf(s)===n.length-s.length){ out.push(n.slice(0,n.length-s.length)); }
+  }
+  return out;
+}
+var KEYS = MENBU.map(function(m){ return m[2].map(norm); });
+function inHokkaido(lat,lon){ return lat>41.3 && lat<45.6 && lon>139.3 && lon<145.9; }
+function matchMenbu(name,lat,lon){
+  var n=norm(name), cs=cores(n), h=inHokkaido(lat,lon), i, j;
+  for(i=0;i<MENBU.length;i++){
+    if((MENBU[i][4]==="h")!==h){ continue; }
+    for(j=0;j<KEYS[i].length;j++){
+      var k=KEYS[i][j];
+      if(MENBU[i][3] ? cs.indexOf(k)>=0 : n.indexOf(k)>=0){ return i; }
+    }
+  }
+  return -1;
+}
+function dist(a,b,c,d){
+  var R=6371000, r=Math.PI/180, x=(c-a)*r, y=(d-b)*r;
+  var h=Math.sin(x/2)*Math.sin(x/2)+Math.cos(a*r)*Math.cos(c*r)*Math.sin(y/2)*Math.sin(y/2);
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+function fmt(m){ return m<1000 ? Math.round(m/10)*10+"m" : (m/1000).toFixed(1)+"km"; }
+function kind(tags,name){
+  var c=(tags&&tags.cuisine)||"";
+  if(/ramen|tsukemen/.test(c)||/ラーメン|らーめん|らぁ麺|拉麺/.test(name)){ return "ラーメン"; }
+  if(/soba/.test(c)||/蕎麦|そば/.test(name)){ return "そば"; }
+  if(/udon/.test(c)||/うどん/.test(name)){ return "うどん"; }
+  return "麺";
+}
+function el(t,c,txt){ var n=document.createElement(t); if(c){n.className=c;} if(txt!=null){n.textContent=txt;} return n; }
+
+var map=L.map("map").setView([43.0608,141.3545],14);
+L.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png",{maxZoom:18,
+  attribution:'<a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a> | 店データ © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
+var layer=L.layerGroup().addTo(map), meLayer=L.layerGroup().addTo(map);
+var results=[], busy=false, hasOrigin=false, last=null, kw="";
+var SYN = [["つけ麺","つけめん","tsukemen"],["ラーメン","らーめん","らぁ麺","拉麺","ramen"],["そば","蕎麦","soba"],["うどん","udon"],["担々麺","担担麺","坦々麺","担々","担担","坦々","タンタン","dandan"],["味噌","みそ"],["醤油","正油","しょうゆ"],["ちゃんぽん","チャンポン","champon"],["油そば","まぜそば"],["鶏白湯","鳥白湯","パイタン"]];
+function words(k){
+  var n=norm(k), out=[n], i, j;
+  for(i=0;i<SYN.length;i++){ for(j=0;j<SYN[i].length;j++){ if(norm(SYN[i][j])===n){ return SYN[i].map(norm); } } }
+  return out;
+}
+function hit(x){
+  if(!kw){ return true; }
+  var t=norm(x.name+" "+x.kind+" "+(x.cui||"")+" "+(x.mi>=0?MENBU[x.mi][0]+" "+MENBU[x.mi][1]:""));
+  return kw.split(/[\s\u3000、,]+/).filter(Boolean).every(function(k){ return words(k).some(function(w){ return t.indexOf(w)>=0; }); });
+}
+var statusEl=document.getElementById("status"), listEl=document.getElementById("list");
+function setBusy(b){ busy=b; document.getElementById("here").disabled=b; document.getElementById("center").disabled=b; document.getElementById("go").disabled=b; }
+
+function buildQuery(lat,lon,r){
+  var keys=[];
+  MENBU.forEach(function(m){ m[2].forEach(function(k){ keys.push(k); }); });
+  var a="(around:"+r+","+lat+","+lon+")";
+  var am='["amenity"~"^(restaurant|fast_food|cafe)$"]';
+  return '[out:json][timeout:25];('+
+    'nwr'+am+'["cuisine"~"ramen|noodle|soba|udon|champon|tsukemen"]'+a+';'+
+    'nwr'+am+'["name"~"'+NOODLE_WORDS+'|'+keys.join("|")+'",i]'+a+';'+
+    ');out center tags;';
+}
+function callOne(ep,q){
+  var ac=new AbortController(), to=setTimeout(function(){ ac.abort(); },9000);
+  return fetch(ep,{method:"POST",headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(q),signal:ac.signal})
+    .then(function(res){ if(!res.ok){ throw new Error("status "+res.status); } return res.json(); })
+    .then(function(j){ clearTimeout(to); return j; },function(e){ clearTimeout(to); throw e; });
+}
+function callOverpass(q){ return Promise.any(ENDPOINTS.map(function(ep){ return callOne(ep,q); })); }
+function seedResults(lat,lon,r){
+  var out=[];
+  SEEDS.forEach(function(s){
+    var d=dist(lat,lon,s[1],s[2]);
+    if(d<=r){ out.push({name:MENBU[s[0]][0],lat:s[1],lon:s[2],mi:s[0],kind:"麺",d:d}); }
+  });
+  out.sort(function(a,b){ return a.d-b.d; });
+  return out;
+}
+function search(lat,lon,showMe){
+  if(busy){ return; }
+  var r=Number(document.getElementById("rad").value);
+  setBusy(true); hasOrigin=true;
+  meLayer.clearLayers();
+  L.circle([lat,lon],{radius:r,color:"#141414",weight:1,fillOpacity:.05}).addTo(meLayer);
+  if(showMe){ L.circleMarker([lat,lon],{radius:8,color:"#fff",weight:3,fillColor:"#1a73e8",fillOpacity:1}).addTo(meLayer).bindPopup("現在地"); }
+  last={lat:lat,lon:lon,showMe:showMe};
+  results=seedResults(lat,lon,r);
+  map.fitBounds(L.latLng(lat,lon).toBounds(r*2));
+  if(document.getElementById("only").checked){ setBusy(false); render("ok"); return; }
+  render("loading");
+  callOverpass(buildQuery(lat,lon,r),0).then(function(data){
+    var seen={};
+    (data.elements||[]).forEach(function(e){
+      var t=e.tags||{}, name=t.name||t["name:ja"];
+      var la=e.lat!=null?e.lat:(e.center&&e.center.lat), lo=e.lon!=null?e.lon:(e.center&&e.center.lon);
+      if(!name||la==null||lo==null){ return; }
+      var id=e.type+e.id; if(seen[id]){ return; } seen[id]=1;
+      var mi=matchMenbu(name,la,lo);
+      if(mi>=0 && SEEDSET[mi]){
+        if(dist(la,lo,SEEDSET[mi][1],SEEDSET[mi][2])<300){ return; }
+        mi=-1;
+      }
+      if(mi<0 && !(CUISINE_RE.test(t.cuisine||"")||NOODLE_RE.test(name))){ return; }
+      results.push({name:name,lat:la,lon:lo,mi:mi,kind:kind(t,name),cui:t.cuisine||"",d:dist(lat,lon,la,lo)});
+    });
+    results.sort(function(a,b){ return a.d-b.d; });
+    setBusy(false);
+    render("ok");
+  }).catch(function(){
+    setBusy(false);
+    render("failed");
+  });
+}
+function render(state){
+  var only=document.getElementById("only").checked;
+  layer.clearLayers(); listEl.textContent="";
+  var shown=0, menbu=0;
+  results.forEach(function(x){
+    var isM=x.mi>=0;
+    if(only && !isM){ return; }
+    if(!hit(x)){ return; }
+    if(isM){ menbu++; }
+    shown++;
+    var note=isM?MENBU[x.mi][1]:"";
+    var pop=el("div","pop"); pop.appendChild(el("b",null,x.name));
+    pop.appendChild(el("div",null,(isM?"麺部の投稿あり　":"")+x.kind+(hasOrigin?"　"+fmt(x.d):"")));
+    if(note){ pop.appendChild(el("div",null,note)); }
+    var mk=L.circleMarker([x.lat,x.lon],isM
+      ?{radius:10,color:"#fff",weight:2,fillColor:"#c8321e",fillOpacity:1}
+      :{radius:6,color:"#fff",weight:1,fillColor:"#141414",fillOpacity:.85}).bindPopup(pop).addTo(layer);
+    if(isM){ mk.bringToFront(); }
+    var li=el("li",isM?"menbu":"");
+    var top=el("div","top2"); top.appendChild(el("p","name",x.name)); top.appendChild(el("span","dist",hasOrigin?fmt(x.d):"")); li.appendChild(top);
+    var meta=el("div","meta");
+    if(isM){ meta.appendChild(el("span","tag m","麺部の投稿あり")); } else { meta.appendChild(el("span","tag n","未開拓")); }
+    meta.appendChild(el("span","tag",x.kind)); li.appendChild(meta);
+    if(note){ li.appendChild(el("p","note",note)); }
+    var acts=el("div","acts");
+    var b=el("button",null,"地図で見る"); b.type="button";
+    b.addEventListener("click",function(){ map.setView([x.lat,x.lon],17); mk.openPopup(); document.getElementById("map").scrollIntoView({block:"start"}); });
+    acts.appendChild(b);
+    var a=el("a",null,"経路を開く"); a.href="https://www.google.com/maps/dir/?api=1&destination="+x.lat+","+x.lon; a.target="_blank"; a.rel="noopener";
+    acts.appendChild(a); li.appendChild(acts); listEl.appendChild(li);
+  });
+  var busyNote="ほかの麺の店は、データのサーバーが混雑していて取得できませんでした。少し待ってからもう一度押してください。";
+  if(state==="init"){ statusEl.textContent="朱色の印は麺部の店です（"+SEEDS.length+"軒）。「現在地から探す」を押すと近い順に並びます。"; return; }
+  if(state==="loading"){ statusEl.textContent="麺部の店 "+menbu+"軒を表示。ほかの麺の店を探しています…"; return; }
+  if(state==="failed"){ statusEl.textContent=(menbu?"麺部の店 "+menbu+"軒を表示。":"条件に合う麺部の店はありません。")+busyNote; return; }
+  if(!shown){ statusEl.textContent="条件に合う店は見つかりませんでした。範囲を広げるか、条件をゆるめてください。"; return; }
+  statusEl.textContent=shown+"軒を近い順に表示（うち麺部の店 "+menbu+"軒）";
+}
+document.getElementById("here").addEventListener("click",function(){
+  if(!navigator.geolocation){ statusEl.textContent="この端末では現在地を取得できません。地図を動かして「地図の中心で探す」を使ってください。"; return; }
+  statusEl.textContent="現在地を確認しています…";
+  navigator.geolocation.getCurrentPosition(function(p){
+    search(p.coords.latitude,p.coords.longitude,true);
+  },function(){
+    statusEl.textContent="現在地を取得できませんでした。位置情報を許可するか、地図を動かして「地図の中心で探す」を使ってください。";
+  },{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
+});
+document.getElementById("center").addEventListener("click",function(){ var c=map.getCenter(); search(c.lat,c.lng,false); });
+document.getElementById("only").addEventListener("change",function(){
+  if(last && !this.checked){ search(last.lat,last.lon,last.showMe); } else { render(hasOrigin?"ok":"init"); }
+});
+function geocode(q){
+  var u="https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=jp&accept-language=ja&bounded=1&viewbox=139.3,45.6,145.9,41.3&q="+encodeURIComponent(q);
+  return fetch(u).then(function(r){ return r.json(); }).then(function(j){
+    if(j && j.length){ return {lat:+j[0].lat,lon:+j[0].lon}; }
+    throw new Error("none");
+  }).catch(function(){
+    return fetch("https://msearch.gsi.go.jp/address-search/AddressSearch?q="+encodeURIComponent(q)).then(function(r){ return r.json(); }).then(function(j){
+      if(j && j.length){ return {lat:j[0].geometry.coordinates[1],lon:j[0].geometry.coordinates[0]}; }
+      throw new Error("none");
+    });
+  });
+}
+(function(){
+  var API="https://uvdodybrxmllldazdtbu.supabase.co/functions/v1/menbu-ask";
+  var st=document.getElementById("aistatus"), out=document.getElementById("aiout"), go=document.getElementById("aigo");
+  function post(body){
+    return fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}).then(function(r){
+      return r.json().then(function(j){ return {code:r.status,j:j}; });
+    });
+  }
+  function fail(code){
+    go.disabled=false;
+    if(code===429){ st.textContent="今日の質問の上限に達しました。明日また聞いてください。"; }
+    else if(code===503){ st.textContent="麺部AIの準備がまだ終わっていません。"; }
+    else{ st.textContent="いまは答えられませんでした。少し待ってからもう一度聞いてください。"; }
+  }
+  function show(j){
+    go.disabled=false; st.textContent="";
+    out.appendChild(el("p","ailead",j.lead||""));
+    (j.items||[]).forEach(function(it){
+      var c=el("div","aicard"+(it.menbu?" menbu":""));
+      c.appendChild(el("p","name",it.name));
+      var meta=el("div","meta");
+      meta.appendChild(el("span","tag "+(it.menbu?"m":"n"),it.menbu?"麺部の投稿あり":"未開拓"));
+      if(it.d!=null){ meta.appendChild(el("span","tag",(it.from?it.from+"から ":"")+fmt(it.d))); }
+      if(it.budget){ meta.appendChild(el("span","tag","予算 "+it.budget)); }
+      c.appendChild(meta);
+      if(it.why){ c.appendChild(el("p",null,it.why)); }
+      if(it.menbu&&it.note){ c.appendChild(el("p",null,"麺部のメモ："+it.note)); }
+      if(it.address){ c.appendChild(el("p",null,it.address)); }
+      if(it.hours){ c.appendChild(el("p",null,"営業："+it.hours)); }
+      if(it.uri){ var a=el("a",null,it.uri.indexOf("google.com/maps")>=0?"Googleマップで開く":"ホットペッパーで見る"); a.href=it.uri; a.target="_blank"; a.rel="noopener"; c.appendChild(a); }
+      out.appendChild(c);
+    });
+    document.getElementById("gattr").hidden=(j.source!=="hotpepper"||!(j.items||[]).length);
+  }
+  document.getElementById("aiform").addEventListener("submit",function(ev){
+    ev.preventDefault();
+    var q=document.getElementById("aiq").value.trim();
+    if(!q){ st.textContent="質問を入れてください。"; return; }
+    go.disabled=true; out.textContent=""; document.getElementById("gattr").hidden=true;
+    st.textContent="考えています…";
+    var base={q:q,only:document.getElementById("only").checked};
+    if(last&&last.showMe){ base.lat=last.lat; base.lon=last.lon; }
+    post(Object.assign({stage:"parse"},base)).then(function(x){
+      if(x.code!==200){ fail(x.code); return; }
+      var body=Object.assign({place:x.j.place||"",food:x.j.food||""},base);
+      var ready=body.place?geocode(body.place).then(function(g){ body.plat=g.lat; body.plon=g.lon; },function(){}):Promise.resolve();
+      return ready.then(function(){ st.textContent="店を選んでいます…"; return post(body); }).then(function(y){
+        if(y.code!==200){ fail(y.code); return; }
+        show(y.j);
+      });
+    }).catch(function(){ go.disabled=false; st.textContent="いまは答えられませんでした。通信の状態を確かめて、もう一度聞いてください。"; });
+  });
+})();
+document.getElementById("find").addEventListener("submit",function(ev){
+  ev.preventDefault();
+  if(busy){ return; }
+  kw=document.getElementById("kw").value.trim();
+  var place=document.getElementById("place").value.trim();
+  if(!place){
+    if(last){ search(last.lat,last.lon,last.showMe); } else { var c=map.getCenter(); search(c.lat,c.lng,false); }
+    return;
+  }
+  statusEl.textContent="「"+place+"」の場所を調べています…";
+  geocode(place).then(function(g){ search(g.lat,g.lon,false); },function(){
+    statusEl.textContent="「"+place+"」の場所が見つかりませんでした。駅名や住所で入れ直してください。";
+  });
+});
+results=seedResults(43.0608,141.3545,1e9);
+render("init");
+// 店の一覧は受け口から最新を読む。読めないときは上に書いてある一覧のまま動く
+fetch("https://uvdodybrxmllldazdtbu.supabase.co/functions/v1/menbu-ask?shops=1").then(function(r){ return r.json(); }).then(function(j){
+  if(!j||!Array.isArray(j.shops)||j.shops.length<MENBU.length||!Array.isArray(j.seeds)){ return; }
+  MENBU=j.shops; SEEDS=j.seeds;
+  SEEDSET={}; SEEDS.forEach(function(s){ SEEDSET[s[0]]=s; });
+  KEYS=MENBU.map(function(m){ return m[2].map(norm); });
+  if(!last&&!busy){ results=seedResults(43.0608,141.3545,1e9); render("init"); }
+}).catch(function(){});
+</script>
+</body>
+</html>
