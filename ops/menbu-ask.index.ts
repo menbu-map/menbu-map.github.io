@@ -49,6 +49,7 @@ var ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
 var OPENAI_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
 var DAILY_CAP = 600;
 var GMAPS_DAY_CAP = 300;
+var GPLACES_DAY_CAP = 150; // Googleの近くの店検索（Nearby Search Pro。月5,000回まで無料）は1日150回まで
 // GOOGLE_MAPS_BROWSER_KEY はブラウザ用の鍵（menbu-map.github.io からだけ使えるように制限して登録する）。ページに渡す前提の公開用の鍵で、ほかの鍵とは分ける
 var ORIGIN_RE = /^https:\/\/menbu-map\.github\.io$/i;
 
@@ -228,6 +229,13 @@ Deno.serve(async function(req){
         var nkw=String(sp.get("kw")||"").replace(/[\u0000-\u001f<>"'&]/g,"").trim().slice(0,20);
         return reply(origin,200,{shops:await hpNear(nk,nla,nlo,Math.min(Math.max(nr,300),5000),nkw)});
       }catch(e){ console.error("near",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); }
+    }
+    if(sp.get("gplaces")){
+      // 近くの麺の店をGoogleで探してよいか（回数の札）。ページはokのときだけGoogleに聞く
+      if(!origin||!ORIGIN_RE.test(origin)){ return reply(origin,403,{error:"origin"}); }
+      var okp=false;
+      try{ var pr=await rest("rpc/menbu_gplaces_hit",{method:"POST",body:JSON.stringify({p_cap:GPLACES_DAY_CAP})}); okp=pr.ok&&(await pr.json())===true; }catch(e){}
+      return reply(origin,200,{ok:okp});
     }
     if(new URL(req.url).searchParams.get("tshirt")){
       try{

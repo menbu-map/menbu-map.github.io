@@ -175,7 +175,8 @@ li.menbu{border-left-color:var(--shu)}
     <p id="status" aria-live="polite">麺部の店を読み込んでいます…</p>
     <section id="detail" class="detail" hidden aria-live="polite"></section>
     <ul id="list"></ul>
-    <p id="hpattr" class="gattr" hidden>未開拓の店の情報の一部：Powered by <a href="https://webservice.recruit.co.jp/" target="_blank" rel="noopener">ホットペッパーグルメ Webサービス</a></p>
+    <p id="gpattr" class="gattr" hidden>店の情報の一部：Google マップ</p>
+  <p id="hpattr" class="gattr" hidden>未開拓の店の情報の一部：Powered by <a href="https://webservice.recruit.co.jp/" target="_blank" rel="noopener">ホットペッパーグルメ Webサービス</a></p>
   </div>
 </section>
 <section id="shoppanel" class="panel" role="dialog" aria-modal="true" aria-labelledby="shoph" hidden>
@@ -201,7 +202,7 @@ li.menbu{border-left-color:var(--shu)}
   <div class="phead"><h2 id="infoh">麺部マップについて</h2><button type="button" class="xbtn" data-close aria-label="閉じる">×</button></div>
   <p>朱色の印は、麺部のLINEに上がった店（巡礼の店）です。黒い印は、まだ麺部の投稿がない店です。</p>
   <p>麺部の店かどうかは店名で判定しているので、同じ名前の別の店に朱色の印がつくことがあります。</p>
-  <p class="small"><span id="mapattr">地図：国土地理院。</span>ほかの麺の店：ホットペッパーグルメ Webサービス、OpenStreetMap。</p>
+  <p class="small"><span id="mapattr">地図：国土地理院。</span>ほかの麺の店：Google マップ、ホットペッパーグルメ Webサービス、OpenStreetMap。</p>
 </section>
 <div id="welcome" class="welcome" hidden>
   <div class="wcard">
@@ -484,7 +485,8 @@ function search(lat,lon,showMe,r,fit){
     results.push({name:name,lat:la,lon:lo,mi:mi,kind:kd,cui:cui||"",d:dist(lat,lon,la,lo),kwhit:!!kh});
   }
   function seedNear(la,lo,mi){ return mi>=0&&SEEDSET[mi]&&dist(la,lo,SEEDSET[mi][1],SEEDSET[mi][2])<300; }
-  var pending=2, gotAny=false;
+  var useG=(M.kind==="google"&&window.google&&google.maps&&google.maps.importLibrary);
+  var pending=useG?3:2, gotAny=false;
   function done(ok){
     if(searchToken!==token){ return; }
     if(ok){ gotAny=true; results.sort(function(a,b){ return a.d-b.d; }); }
@@ -503,6 +505,26 @@ function search(lat,lon,showMe,r,fit){
     usedHp=true; document.getElementById("hpattr").hidden=false;
     done(true);
   }).catch(function(){ done(false); });
+  // Googleで近くのラーメン・麺の店を探す（1日150回まで。超えた日や失敗したときは、ほかの2つだけで出す）
+  if(useG){
+    fetch(API_NEAR+"?gplaces=1").then(function(res){ return res.json(); }).then(function(j){
+      if(!j||!j.ok){ throw new Error("cap"); }
+      return google.maps.importLibrary("places");
+    }).then(function(lib){
+      return lib.Place.searchNearby({fields:["displayName","location","primaryType"],locationRestriction:{center:{lat:lat,lng:lon},radius:Math.min(r,50000)},includedTypes:["ramen_restaurant","noodle_shop","chinese_noodle_restaurant"],maxResultCount:20,rankPreference:lib.SearchNearbyRankPreference.DISTANCE,language:"ja",region:"jp"});
+    }).then(function(res){
+      (res&&res.places||[]).forEach(function(p){
+        if(!p.location||!p.displayName){ return; }
+        var la=p.location.lat(), lo=p.location.lng(), name=p.displayName;
+        var mi=matchMenbu(name,la,lo);
+        if(mi>=0&&SEEDSET[mi]&&dist(la,lo,SEEDSET[mi][1],SEEDSET[mi][2])<300){ return; }
+        if(mi>=0&&SEEDSET[mi]){ mi=-1; }
+        addShop(name,la,lo,mi,p.primaryType==="ramen_restaurant"?"ラーメン":kind({},name),"");
+      });
+      document.getElementById("gpattr").hidden=false;
+      done(true);
+    }).catch(function(){ done(false); });
+  }
   callOverpass(buildQuery(lat,lon,r),0).then(function(data){
     var seen={};
     (data.elements||[]).forEach(function(e){
