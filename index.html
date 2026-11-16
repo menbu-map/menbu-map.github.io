@@ -420,7 +420,7 @@ function googleMap(v){
       if(fit){ quiet(); m.fitBounds(c.getBounds(),0); }
     },
     view:function(){ var c=m.getCenter(), b=m.getBounds(), z=m.getZoom(); var r=1000; if(b){ var ne=b.getNorthEast(); r=Math.min(dist(c.lat(),c.lng(),ne.lat(),c.lng()),dist(c.lat(),c.lng(),c.lat(),ne.lng())); } return {lat:c.lat(),lon:c.lng(),z:z,r:r}; },
-    onMove:function(cb){ m.addListener("idle",function(){ if(!isQuiet()){ cb(); } }); },
+    onMove:function(cb){ var first=true; m.addListener("idle",function(){ if(first){ first=false; return; } if(!isQuiet()){ cb(); } }); },
     resize:function(){},
     destroy:function(){ freshMapDiv(); }
   };
