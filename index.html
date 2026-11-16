@@ -76,6 +76,7 @@ li.menbu{border-left-color:var(--shu)}
 footer{font-size:12px;color:var(--sub);border-top:1px solid var(--line);padding-top:10px}
 footer p{margin:0 0 4px}
 .pop b{font-size:14px}
+.pop .gbtn{display:inline-block;margin-top:6px;font-weight:700;color:#141414;border:1.5px solid #141414;border-radius:4px;padding:5px 8px;text-decoration:none}
 </style>
 </head>
 <body>
@@ -211,6 +212,7 @@ var MENBU = [
 // 位置を確認できた麺部の店（MENBUの番号, 緯度, 経度）。外部サーバーが止まっていても表示する
 var SEEDS = [[0,43.062504,141.353851],[1,43.055187,141.352646],[2,43.056427,141.356827],[3,43.046557,141.357337],[4,43.051092,141.354661],[6,43.044788,141.375656],[8,43.054134,141.343001],[9,43.119373,141.348923],[11,43.074932,141.276459],[12,43.055808,141.351834],[14,42.903275,141.579697],[22,43.048597,141.337363],[25,43.070265,141.333299],[27,43.130668,141.355018],[31,43.012121,141.420278],[41,43.099463,141.402868],[44,43.053405,141.354089],[48,43.038968,141.347171],[62,43.423504,141.884471],[5,43.045885,141.356630],[13,43.144699,141.146133],[24,43.023470,141.356794],[33,43.057224,141.350433],[38,43.121273,141.314941]];
 var SEEDSET = {}; SEEDS.forEach(function(s){ SEEDSET[s[0]]=s; });
+var AREA_TXT = {"0": "札幌駅と大通の間（北1条西2）", "1": "すすきの（ココノ ススキノ）", "2": "すすきの（南4条西1）", "3": "中島公園の近く", "4": "中島公園の近く（南8条西3）", "5": "中島公園の近く（南12条西1）", "6": "豊平区豊平（豊平公園駅の近く）", "8": "中央区南4条西10", "9": "東区北49条東4", "11": "西区西野", "12": "すすきの（南3条西4）", "13": "小樽市銭函", "14": "恵庭市恵み野", "22": "中央区南8条西13", "24": "豊平区中の島", "25": "中央区北8条西13", "27": "北区太平", "31": "豊平区月寒東", "33": "狸小路の近く（南2条西5）", "38": "北区新琴似", "41": "東区伏古", "44": "すすきの（南6条西3）", "48": "中央区南16条西9", "62": "奈井江町"};
 var ENDPOINTS = ["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://overpass.private.coffee/api/interpreter"];
 var NOODLE_WORDS = "ラーメン|らーめん|らぁ麺|らあめん|拉麺|麺|麵|そば|蕎麦|うどん";
 var NOODLE_RE = new RegExp(NOODLE_WORDS);
@@ -357,6 +359,8 @@ function render(state){
     var pop=el("div","pop"); pop.appendChild(el("b",null,x.name));
     pop.appendChild(el("div",null,(isM?"麺部の投稿あり　":"")+x.kind+(hasOrigin?"　"+fmt(x.d):"")));
     if(note){ pop.appendChild(el("div",null,note)); }
+    var gq="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(x.name+" "+((isM&&AREA_TXT[x.mi])||"北海道"));
+    var pg=el("a","gbtn","口コミ・写真を見る（Googleマップ）"); pg.href=gq; pg.target="_blank"; pg.rel="noopener"; pop.appendChild(pg);
     var mk=L.circleMarker([x.lat,x.lon],isM
       ?{radius:10,color:"#fff",weight:2,fillColor:"#c8321e",fillOpacity:1}
       :{radius:6,color:"#fff",weight:1,fillColor:"#141414",fillOpacity:.85}).bindPopup(pop).addTo(layer);
@@ -371,6 +375,7 @@ function render(state){
     var b=el("button",null,"地図で見る"); b.type="button";
     b.addEventListener("click",function(){ map.setView([x.lat,x.lon],17); mk.openPopup(); document.getElementById("map").scrollIntoView({block:"start"}); });
     acts.appendChild(b);
+    var g=el("a",null,"口コミ・写真"); g.href=gq; g.target="_blank"; g.rel="noopener"; acts.appendChild(g);
     var a=el("a",null,"経路を開く"); a.href="https://www.google.com/maps/dir/?api=1&destination="+x.lat+","+x.lon; a.target="_blank"; a.rel="noopener";
     acts.appendChild(a); li.appendChild(acts); listEl.appendChild(li);
   });
@@ -478,7 +483,7 @@ render("init");
 // 店の一覧は受け口から最新を読む。読めないときは上に書いてある一覧のまま動く
 fetch("https://uvdodybrxmllldazdtbu.supabase.co/functions/v1/menbu-ask?shops=1").then(function(r){ return r.json(); }).then(function(j){
   if(!j||!Array.isArray(j.shops)||j.shops.length<MENBU.length||!Array.isArray(j.seeds)){ return; }
-  MENBU=j.shops; SEEDS=j.seeds;
+  MENBU=j.shops; SEEDS=j.seeds; if(j.area){ AREA_TXT=j.area; }
   SEEDSET={}; SEEDS.forEach(function(s){ SEEDSET[s[0]]=s; });
   KEYS=MENBU.map(function(m){ return m[2].map(norm); });
   if(!last&&!busy){ results=seedResults(43.0608,141.3545,1e9); render("init"); }

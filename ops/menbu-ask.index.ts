@@ -148,7 +148,7 @@ Deno.serve(async function(req){
   var hasLlm=!!(ANTHROPIC_KEY||OPENAI_KEY);
   try{ await loadShops(); }catch(e){}
   if(req.method==="GET"){
-    if(new URL(req.url).searchParams.get("shops")){ return reply(origin,200,{shops:MENBU,seeds:SEEDS}); }
+    if(new URL(req.url).searchParams.get("shops")){ return reply(origin,200,{shops:MENBU,seeds:SEEDS,area:AREA}); }
     var hk=""; try{ hk=await hotpepperKey(); }catch(e){}
     return reply(origin,200,{ok:true,llm:ANTHROPIC_KEY?"anthropic":(OPENAI_KEY?"openai":"none"),hotpepper:!!hk});
   }
