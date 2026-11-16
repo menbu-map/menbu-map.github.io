@@ -591,7 +591,7 @@ function showDetail(x,gq){
       if(dd>800){ box.appendChild(el("p","dwarn","地図の印から"+fmt(dd)+"離れた店が見つかりました。別の店の情報かもしれません。")); }
     }
     if(p.formattedAddress){ box.appendChild(el("p","dwho",p.formattedAddress)); }
-    var ph=(p.photos||[]).slice(0,3);
+    var ph=(p.photos||[]).slice(0,1); // 写真は1枚（月1,000件の無料枠に収めるため）。続きはGoogleマップで
     if(ph.length){
       var row=el("div","dphotos");
       ph.forEach(function(f){
@@ -618,7 +618,7 @@ function showDetail(x,gq){
     var a=el("a",null,"Googleマップで全部見る"); a.href=p.googleMapsURI||gq; a.target="_blank"; a.rel="noopener"; foot.appendChild(a);
     foot.appendChild(el("span","gmark","Google Maps"));
     box.appendChild(foot);
-  }).catch(function(){ delete DCACHE[ck]; fail("口コミと写真を読み込めませんでした。"); });
+  }).catch(function(){ delete DCACHE[ck]; fail("口コミと写真を表示できませんでした。今日の表示回数の上限に達したかもしれません。Googleマップで直接見られます。"); });
 }
 function redraw(){
   if(last){ M.me(last.lat,last.lon,lastR,last.showMe); }
