@@ -124,6 +124,25 @@ li.menbu{border-left-color:var(--shu)}
 #aipanel{position:fixed;z-index:1300;top:56px;left:8px;right:8px;margin:0 auto;max-width:520px;max-height:calc(100dvh - 72px);overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.35)}
 #shoppanel .ai{border:0;padding:0}
 .shopnone{margin:0;font-size:14px;color:var(--sub)}
+.stampb{letter-spacing:.02em;padding:5px 10px}
+.stampsum{font-size:18px!important;font-weight:700}
+.sth{margin:10px 0 4px;font-size:15px}
+.stlist{gap:4px}
+.stlist li{flex-direction:row;align-items:center;gap:8px;padding:8px 10px;border-left-width:1px;cursor:pointer}
+.stlist li.done{border-left:5px solid var(--shu)}
+.stlist .mk{flex:0 0 auto;width:22px;height:22px;border-radius:50%;border:2px solid var(--shu);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:#fff}
+.stlist li.done .mk{background:var(--shu)}
+.stlist .nm{flex:1 1 auto;font-weight:700;overflow-wrap:anywhere}
+.stlist .ar{font-size:12px;color:var(--sub)}
+.acts button[aria-pressed="true"]{background:var(--shu);border-color:var(--shu);color:#fff}
+.dmore{display:flex;gap:12px;flex-wrap:wrap;font-size:13px}
+.dmore button,.dmore a{font:inherit;font-size:13px;background:transparent;border:0;padding:4px 0;color:var(--sub);text-decoration:underline;cursor:pointer}
+.dmore a.line{color:#06c755;font-weight:700}
+.rep{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:13px}
+.rep select{font:inherit;font-size:14px;padding:5px;border:1px solid var(--sumi);border-radius:4px}
+.rep button{font:inherit;font-size:13px;font-weight:700;padding:5px 12px;border:1px solid var(--sumi);background:var(--sumi);color:#fff;border-radius:4px;cursor:pointer}
+.dmsg{margin:0;font-size:13px;font-weight:700;color:var(--ink)}
+.dmsg:empty{display:none}
 .welcome{position:fixed;inset:0;z-index:1400;background:rgba(20,20,20,.72);display:flex;align-items:center;justify-content:center;padding:16px}
 .wcard{background:var(--sumi);color:#fff;border-radius:12px;padding:24px 18px;max-width:360px;width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
 .wcard p{margin:0;font-size:14px;color:#e2e0d9}
@@ -148,6 +167,7 @@ li.menbu{border-left-color:var(--shu)}
 <body>
 <header class="bar">
   <div class="brand"><svg class="crest sm" viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="cc"><circle cx="50" cy="50" r="33"/></clipPath></defs><circle cx="50" cy="50" r="44" fill="none" stroke="#141414" stroke-width="9"/><g clip-path="url(#cc)"><rect width="100" height="100" fill="#141414"/><g fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round"><path d="M8 37 q10.5 -9 21 0 t21 0 t21 0 t21 0"/><path d="M8 51 q10.5 -9 21 0 t21 0 t21 0 t21 0"/><path d="M8 65 q10.5 -9 21 0 t21 0 t21 0 t21 0"/></g><g stroke-linecap="round"><path d="M66 10 L45 92" stroke="#141414" stroke-width="8"/><path d="M76 13 L55 95" stroke="#141414" stroke-width="8"/><path d="M66 10 L45 92" stroke="#fff" stroke-width="3.2"/><path d="M76 13 L55 95" stroke="#fff" stroke-width="3.2"/></g></g></svg><span class="bt">麺部</span><span class="bs">MENBU MAP</span></div>
+  <button type="button" id="openstamp" class="barbtn stampb" aria-label="巡礼の記録">巡礼 <span id="stampn">0</span></button>
   <button type="button" id="openshop" class="barbtn">SHOP</button>
   <button type="button" id="openinfo" class="barbtn ib" aria-label="このマップについて">i</button>
 </header>
@@ -197,6 +217,15 @@ li.menbu{border-left-color:var(--shu)}
     <p id="tsstatus" aria-live="polite"></p>
   </section>
   <p id="shopnone" class="shopnone">いま受付中の商品はありません。</p>
+</section>
+<section id="stamppanel" class="panel" role="dialog" aria-modal="true" aria-labelledby="stamph" hidden>
+  <div class="phead"><h2 id="stamph">巡礼</h2><button type="button" class="xbtn" data-close aria-label="閉じる">×</button></div>
+  <p id="stampsum" class="stampsum"></p>
+  <p class="small">店のカードの「行った」「行きたい」で記録します。記録はこのスマホの中だけに残ります。</p>
+  <h3 class="sth">行きたい</h3>
+  <ul id="wantlist" class="stlist"></ul>
+  <h3 class="sth">麺部の店</h3>
+  <ul id="stamplist" class="stlist"></ul>
 </section>
 <section id="infopanel" class="panel" role="dialog" aria-modal="true" aria-labelledby="infoh" hidden>
   <div class="phead"><h2 id="infoh">麺部マップについて</h2><button type="button" class="xbtn" data-close aria-label="閉じる">×</button></div>
@@ -395,6 +424,7 @@ function leafletMap(v){
       if(fit){ quiet(); m.fitBounds(L.latLng(lat,lon).toBounds(r*2)); }
     },
     view:function(){ var c=m.getCenter(), b=m.getBounds(); return {lat:c.lat,lon:c.lng,z:m.getZoom(),r:Math.min(m.distance(c,L.latLng(b.getNorth(),c.lng)),m.distance(c,L.latLng(c.lat,b.getEast())))}; },
+    focus:function(lat,lon){ quiet(); m.setView([lat,lon],Math.max(m.getZoom(),16)); },
     onMove:function(cb){ m.on("moveend",function(){ if(!isQuiet()){ cb(); } }); },
     resize:function(){ m.invalidateSize(); },
     destroy:function(){ m.remove(); freshMapDiv(); }
@@ -421,6 +451,7 @@ function googleMap(v){
       if(fit){ quiet(); m.fitBounds(c.getBounds(),0); }
     },
     view:function(){ var c=m.getCenter(), b=m.getBounds(), z=m.getZoom(); var r=1000; if(b){ var ne=b.getNorthEast(); r=Math.min(dist(c.lat(),c.lng(),ne.lat(),c.lng()),dist(c.lat(),c.lng(),c.lat(),ne.lng())); } return {lat:c.lat(),lon:c.lng(),z:z,r:r}; },
+    focus:function(lat,lon){ quiet(); m.panTo({lat:lat,lng:lon}); if(m.getZoom()<16){ m.setZoom(16); } },
     onMove:function(cb){ var first=true; m.addListener("idle",function(){ if(first){ first=false; return; } if(!isQuiet()){ cb(); } }); },
     resize:function(){},
     destroy:function(){ freshMapDiv(); }
@@ -472,7 +503,7 @@ function search(lat,lon,showMe,r,fit){
   if(busy){ return; }
   r=Math.round(Math.min(Math.max(r||1000,300),5000));
   document.getElementById("area").hidden=true; closeDetail();
-  setBusy(true); hasOrigin=true; searchToken={};
+  setBusy(true); hasOrigin=true; searchToken={}; track("search");
   last={lat:lat,lon:lon,showMe:showMe}; lastR=r;
   M.me(lat,lon,r,showMe,fit!==false);
   results=seedResults(lat,lon,r);
@@ -574,7 +605,7 @@ function render(state){
   if(state==="loading"){ statusEl.textContent="麺部の店 "+menbu+"軒を表示。ほかの麺の店を探しています…"; return; }
   if(state==="partial"){ statusEl.textContent=shown?"近くに"+shown+"軒（麺部の店 "+menbu+"軒）・さらに探しています…":"麺の店を探しています…"; return; }
   if(state==="failed"){ statusEl.textContent=(menbu?"麺部の店 "+menbu+"軒を表示。":"条件に合う麺部の店はありません。")+busyNote; return; }
-  if(!shown){ statusEl.textContent="条件に合う店は見つかりませんでした。地図を広げて「このエリアで探す」か、絞り込みを外してください。"; return; }
+  if(!shown){ if(state==="ok"&&hasOrigin){ track("zero"); } statusEl.textContent="条件に合う店は見つかりませんでした。地図を広げて「このエリアで探す」か、絞り込みを外してください。"; return; }
   statusEl.textContent="近くに"+shown+"軒（麺部の店 "+menbu+"軒）";
 }
 document.getElementById("here").addEventListener("click",function(){
@@ -647,7 +678,7 @@ function geocode(q){
     document.getElementById("gattr").hidden=(j.source!=="hotpepper"||!(j.items||[]).length);
   }
   document.getElementById("aiform").addEventListener("submit",function(ev){
-    ev.preventDefault();
+    ev.preventDefault(); track("ai");
     var q=document.getElementById("aiq").value.trim();
     if(!q){ st.textContent="質問を入れてください。"; return; }
     go.disabled=true; out.textContent=""; document.getElementById("gattr").hidden=true;
@@ -731,6 +762,60 @@ function attrLink(a){
   if(a.uri){ n.href=a.uri; n.target="_blank"; n.rel="noopener"; }
   return n;
 }
+// 使われ方を数える（名前や場所は送らない。種類ごとの回数だけ）
+function track(ev){ try{ var b=JSON.stringify({action:"ev",ev:ev}); if(!(navigator.sendBeacon&&navigator.sendBeacon(API_NEAR,b))){ fetch(API_NEAR,{method:"POST",body:b,keepalive:true}).catch(function(){}); } }catch(e){} }
+function shareLink(x){ return location.origin+location.pathname+"#s="+x.lat.toFixed(5)+","+x.lon.toFixed(5)+"&n="+encodeURIComponent(x.name); }
+function copyText(t,msg){
+  function ok(){ msg.textContent="リンクをコピーしました。"; }
+  function fallback(){ var i=document.createElement("textarea"); i.value=t; i.style.position="fixed"; i.style.opacity="0"; document.body.appendChild(i); i.select(); try{ document.execCommand("copy"); ok(); }catch(e){ msg.textContent=t; } i.remove(); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(t).then(ok,fallback); } else { fallback(); }
+}
+// 巡礼スタンプ：「行った」「行きたい」をこのスマホの中だけに残す
+var STAMPS={went:{},want:{}};
+try{ var sv0=JSON.parse(localStorage.getItem("menbu_stamps")||"null"); if(sv0&&sv0.went&&sv0.want){ STAMPS=sv0; } }catch(e){}
+function stampKey(x){ return x.mi>=0?"m:"+MENBU[x.mi][0]:"p:"+x.name+"@"+x.lat.toFixed(3)+","+x.lon.toFixed(3); }
+function saveStamps(){ try{ localStorage.setItem("menbu_stamps",JSON.stringify(STAMPS)); }catch(e){} updateStampCount(); }
+function stampBtn(x,kind,label){
+  var b=el("button",null,label), k=stampKey(x); b.type="button";
+  function sync(){ var on=!!STAMPS[kind][k]; b.setAttribute("aria-pressed",String(on)); b.textContent=(on?"✓ ":"")+label; }
+  b.addEventListener("click",function(){
+    if(STAMPS[kind][k]){ delete STAMPS[kind][k]; }
+    else{ STAMPS[kind][k]={n:x.name,la:x.lat,lo:x.lon,t:Date.now()}; track(kind); if(kind==="went"&&STAMPS.want[k]){ delete STAMPS.want[k]; } if(kind==="want"&&STAMPS.went[k]){ delete STAMPS.went[k]; } }
+    saveStamps(); sync();
+    Array.prototype.forEach.call(b.parentNode.querySelectorAll("button[aria-pressed]"),function(o){ if(o!==b&&o._sync){ o._sync(); } });
+  });
+  b._sync=sync; sync(); return b;
+}
+function wentMenbu(){ var n=0; SEEDS.forEach(function(sd){ if(STAMPS.went["m:"+MENBU[sd[0]][0]]){ n++; } }); return n; }
+function updateStampCount(){ document.getElementById("stampn").textContent=wentMenbu()+"/"+SEEDS.length; }
+function openFromStamp(name,lat,lon){
+  var mi=matchMenbu(name,lat,lon), x=null;
+  results.forEach(function(r){ if(!x&&r.name===name&&Math.abs(r.lat-lat)<1e-3&&Math.abs(r.lon-lon)<1e-3){ x=r; } });
+  if(!x){ x={name:name,lat:lat,lon:lon,mi:mi,kind:mi>=0?"麺":kind({},name),cui:"",d:last?dist(last.lat,last.lon,lat,lon):null}; results.push(x); render(lastState==="init"?"init":"ok"); }
+  M.focus(lat,lon); selectShop(x,false);
+}
+function renderStamps(){
+  var ul=document.getElementById("stamplist"), wl=document.getElementById("wantlist"); ul.textContent=""; wl.textContent="";
+  var done=wentMenbu();
+  document.getElementById("stampsum").textContent="麺部の店 "+done+" / "+SEEDS.length+" 軒"+(done&&done===SEEDS.length?"　全店制覇！":"");
+  SEEDS.slice().sort(function(a,b){ var A=!!STAMPS.went["m:"+MENBU[a[0]][0]], B=!!STAMPS.went["m:"+MENBU[b[0]][0]]; return A===B?0:(A?-1:1); }).forEach(function(sd){
+    var nm=MENBU[sd[0]][0], on=!!STAMPS.went["m:"+nm];
+    var li=el("li",on?"done":""); li.tabIndex=0; li.setAttribute("role","button");
+    li.appendChild(el("span","mk",on?"✓":"")); li.appendChild(el("span","nm",nm)); li.appendChild(el("span","ar",String(AREA_TXT[sd[0]]||"").replace(/（.*$/,"")));
+    function go(){ window.__closePanels(); openFromStamp(nm,sd[1],sd[2]); }
+    li.addEventListener("click",go); li.addEventListener("keydown",function(e){ if(e.key==="Enter"){ go(); } });
+    ul.appendChild(li);
+  });
+  var wants=Object.keys(STAMPS.want).map(function(k){ return STAMPS.want[k]; }).sort(function(a,b){ return b.t-a.t; });
+  if(!wants.length){ var e0=el("li",null,"まだありません。店のカードの「行きたい」で追加できます。"); e0.style.cursor="default"; wl.appendChild(e0); }
+  wants.forEach(function(w){
+    var li=el("li"); li.tabIndex=0; li.setAttribute("role","button");
+    li.appendChild(el("span","nm",w.n));
+    function go(){ window.__closePanels(); openFromStamp(w.n,w.la,w.lo); }
+    li.addEventListener("click",go); li.addEventListener("keydown",function(e){ if(e.key==="Enter"){ go(); } });
+    wl.appendChild(li);
+  });
+}
 var selected=null;
 function closeDetail(){ var box=document.getElementById("detail"); box.hidden=true; box.textContent=""; selected=null; listEl.hidden=false; }
 // 店を選ぶ：一覧の上にその店のカードを出す。Googleマップのときは評価・写真・口コミもカードの中に読み込む
@@ -748,11 +833,32 @@ function selectShop(x,fromList){
   box.appendChild(meta);
   if(isM&&MENBU[x.mi][1]){ box.appendChild(el("p","note","麺部のメモ："+MENBU[x.mi][1])); }
   var acts=el("div","acts");
-  var a=el("a","primary","経路"); a.href="https://www.google.com/maps/dir/?api=1&destination="+x.lat+","+x.lon; a.target="_blank"; a.rel="noopener"; acts.appendChild(a);
+  var a=el("a","primary","経路"); a.href="https://www.google.com/maps/dir/?api=1&destination="+x.lat+","+x.lon; a.target="_blank"; a.rel="noopener"; a.addEventListener("click",function(){ track("route"); }); acts.appendChild(a);
+  acts.appendChild(stampBtn(x,"went","行った")); acts.appendChild(stampBtn(x,"want","行きたい"));
   if(M.kind!=="google"){ var g=el("a",null,"口コミ・写真（Googleマップ）"); g.href=gq; g.target="_blank"; g.rel="noopener"; acts.appendChild(g); }
   var back=el("button",null,"一覧に戻る"); back.type="button"; back.addEventListener("click",function(){ closeDetail(); }); acts.appendChild(back);
   box.appendChild(acts);
+  // LINEで送る・リンクをコピー・情報がちがう
+  var link=shareLink(x), more=el("div","dmore"), msg=el("p","dmsg");
+  var ln=el("a","line","LINEで送る"); ln.href="https://line.me/R/share?text="+encodeURIComponent(x.name+"\n"+link+"\n（麺部マップより）"); ln.target="_blank"; ln.rel="noopener"; ln.addEventListener("click",function(){ track("share_line"); });
+  var cp=el("button",null,"リンクをコピー"); cp.type="button"; cp.addEventListener("click",function(){ copyText(link,msg); track("share_copy"); });
+  var rb=el("button",null,"情報がちがう"); rb.type="button";
+  more.appendChild(ln); more.appendChild(cp); more.appendChild(rb); box.appendChild(more);
+  var rp=el("div","rep"); rp.hidden=true;
+  var sel=el("select"); ["閉店している","場所がちがう","麺の店ではない","その他"].forEach(function(v){ var o=el("option",null,v); o.value=v; sel.appendChild(o); });
+  sel.setAttribute("aria-label","ちがう点");
+  var sb=el("button",null,"送る"); sb.type="button";
+  rp.appendChild(sel); rp.appendChild(sb); box.appendChild(rp); box.appendChild(msg);
+  rb.addEventListener("click",function(){ rp.hidden=!rp.hidden; });
+  sb.addEventListener("click",function(){
+    sb.disabled=true;
+    fetch(API_NEAR,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"report",name:x.name,lat:x.lat,lon:x.lon,reason:sel.value})}).then(function(r){
+      msg.textContent=r.ok?"ありがとうございます。確認して直します。":(r.status===429?"今日はこれ以上送れません。":"送れませんでした。少し待ってもう一度お試しください。");
+      if(r.ok){ rp.hidden=true; } else { sb.disabled=false; }
+    }).catch(function(){ sb.disabled=false; msg.textContent="送れませんでした。通信の状態を確かめてください。"; });
+  });
   var dg=el("div","dg"); dg.id="dg"; box.appendChild(dg);
+  track("card");
   if(fromList&&x.mk){ x.mk.open(); }
   document.getElementById("sbody").scrollTop=0;
   setSheet(M.kind==="google"?"half":"peekcard");
@@ -831,7 +937,7 @@ function useGoogle(key){
     redraw();
   };
   window.__gmReady=function(){
-    quiet(); var v=M.view(); M.destroy(); M=googleMap(v); closeDetail();
+    quiet(); var v=M.view(); M.destroy(); M=googleMap(v); closeDetail(); setTimeout(function(){ if(window.__shareTarget){ var t=window.__shareTarget; window.__shareTarget=null; openFromStamp(t[0],t[1],t[2]); } else if(window.__shareApply){ window.__shareApply(); } },300);
     document.getElementById("mapattr").textContent="地図・口コミ・写真：Google。";
     redraw();
   };
@@ -849,6 +955,7 @@ fetch("https://uvdodybrxmllldazdtbu.supabase.co/functions/v1/menbu-ask?shops=1")
   SEEDSET={}; SEEDS.forEach(function(s){ SEEDSET[s[0]]=s; });
   KEYS=MENBU.map(function(m){ return m[2].map(norm); });
   if(!last&&!busy){ results=seedResults(43.0608,141.3545,1e9); render("init"); }
+  updateStampCount();
 }).catch(function(){});
 
 // ===== 地図ファーストの操作 =====
@@ -891,7 +998,7 @@ window.addEventListener("resize",function(){ setSheet(sheetState); if(M.resize){
 })();
 // SHOP・このマップについて・麺AIの窓（どれかひとつだけ開く）
 (function(){
-  var ids=["shoppanel","infopanel","aipanel"], aib=document.getElementById("aiopen");
+  var ids=["shoppanel","infopanel","aipanel","stamppanel"], aib=document.getElementById("aiopen");
   function closeAll(){ ids.forEach(function(id){ document.getElementById(id).hidden=true; }); aib.setAttribute("aria-expanded","false"); if(location.hash==="#shop"){ history.replaceState(null,"",location.pathname+location.search); } }
   function open(id){
     closeAll(); var p=document.getElementById(id); p.hidden=false;
@@ -901,6 +1008,8 @@ window.addEventListener("resize",function(){ setSheet(sheetState); if(M.resize){
   }
   document.getElementById("openshop").addEventListener("click",function(){ open("shoppanel"); });
   document.getElementById("openinfo").addEventListener("click",function(){ open("infopanel"); });
+  document.getElementById("openstamp").addEventListener("click",function(){ renderStamps(); open("stamppanel"); track("stamps"); });
+  window.__closePanels=closeAll;
   aib.addEventListener("click",function(){ if(document.getElementById("aipanel").hidden){ open("aipanel"); } else { closeAll(); } });
   document.getElementById("aiclose").addEventListener("click",closeAll);
   Array.prototype.forEach.call(document.querySelectorAll("[data-close]"),function(b){ b.addEventListener("click",closeAll); });
@@ -916,10 +1025,25 @@ window.addEventListener("resize",function(){ setSheet(sheetState); if(M.resize){
   function done(){ w.hidden=true; try{ localStorage.setItem("menbu_seen","1"); }catch(e){} }
   document.getElementById("wgo").addEventListener("click",function(){ done(); document.getElementById("here").click(); });
   document.getElementById("wskip").addEventListener("click",done);
-  if(!seen&&location.hash!=="#shop"){ w.hidden=false; document.getElementById("wgo").focus(); return; }
+  if(!seen&&location.hash!=="#shop"&&!/^#s=/.test(location.hash)){ w.hidden=false; document.getElementById("wgo").focus(); return; }
   if(navigator.permissions&&navigator.permissions.query){
     navigator.permissions.query({name:"geolocation"}).then(function(p){ if(p.state==="granted"&&!last){ document.getElementById("here").click(); } }).catch(function(){});
   }
+})();
+// 送られてきた店のリンク（#s=緯度,経度&n=店名）を開いたら、その店のカードを出す
+(function(){
+  track("visit"); updateStampCount();
+  var m=/^#s=(-?[\d.]+),(-?[\d.]+)&n=(.+)$/.exec(location.hash||"");
+  if(!m){ return; }
+  var la=Number(m[1]), lo=Number(m[2]), nm="";
+  try{ nm=decodeURIComponent(m[3]).slice(0,60); }catch(e){ return; }
+  if(!(la>20&&la<46.5&&lo>122&&lo<154.5)||!nm){ return; }
+  track("share_open");
+  var done=false;
+  function apply(){ if(done){ return; } done=true; if(window.__gmTried&&M.kind!=="google"){ window.__shareTarget=[nm,la,lo]; } openFromStamp(nm,la,lo); history.replaceState(null,"",location.pathname+location.search); }
+  window.__shareApply=apply;
+  setTimeout(function(){ if(!window.__gmTried||M.kind==="google"){ apply(); } },2500);
+  setTimeout(apply,6000);
 })();
 </script>
 </body>

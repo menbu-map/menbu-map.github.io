@@ -181,6 +181,8 @@ async function hpNear(key,lat,lon,r,kw){
   return out;
 }
 // ===== 麺部Tシャツの予約（部員向け。支払いは例会で手渡し） =====
+var EV_OK = {visit:1,search:1,card:1,route:1,share_line:1,share_copy:1,share_open:1,zero:1,went:1,want:1,stamps:1,ai:1};
+var REPORT_REASONS = ["閉店している","場所がちがう","麺の店ではない","その他"];
 var TS_IP_CAP = 5; // 同じ相手からの予約は1日5件まで
 function jstToday(){ return new Date(Date.now()+9*3600*1000).toISOString().slice(0,10); }
 async function tshirtConfig(){
@@ -256,6 +258,27 @@ Deno.serve(async function(req){
   if(req.method!=="POST"){ return reply(origin,405,{error:"method"}); }
   if(!origin||!ORIGIN_RE.test(origin)){ return reply(origin,403,{error:"origin"}); }
   var body; try{ body=await req.json(); }catch(e){ return reply(origin,400,{error:"bad"}); }
+  // 使われ方の数（名前なし・種類ごとに1日の回数だけ）と「情報がちがう」の報告
+  if(body&&body.action==="ev"){
+    var ev=String(body.ev||"");
+    if(!EV_OK[ev]){ return reply(origin,400,{error:"ev"}); }
+    try{ await rest("rpc/menbu_event_hit",{method:"POST",body:JSON.stringify({p_ev:ev})}); }catch(e){}
+    return reply(origin,200,{ok:true});
+  }
+  if(body&&body.action==="report"){
+    try{
+      var rname=clean(body.name,60), reason=clean(body.reason,20), rla=Number(body.lat), rlo=Number(body.lon);
+      if(!rname||REPORT_REASONS.indexOf(reason)<0){ return reply(origin,400,{error:"bad"}); }
+      var rih=await clientKey(req), rsince=new Date(Date.now()-24*3600*1000).toISOString();
+      var rc=await rest("menbu_reports?ip_hash=eq."+rih+"&created_at=gte."+encodeURIComponent(rsince)+"&select=id");
+      var rrows=rc.ok?await rc.json():[];
+      if(rrows.length>=10){ return reply(origin,429,{error:"cap"}); }
+      var ri=await rest("menbu_reports",{method:"POST",body:JSON.stringify({name:rname,lat:Number.isFinite(rla)?rla:null,lon:Number.isFinite(rlo)?rlo:null,reason:reason,ip_hash:rih})});
+      if(!ri.ok){ return reply(origin,502,{error:"save"}); }
+      try{ await rest("rpc/menbu_event_hit",{method:"POST",body:JSON.stringify({p_ev:"report"})}); }catch(e){}
+      return reply(origin,200,{ok:true});
+    }catch(e){ return reply(origin,502,{error:"upstream"}); }
+  }
   if(body&&body.action==="tshirt"){ try{ return await tshirtOrder(req,origin,body); }catch(e){ console.error("tshirt",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); } }
   if(!hasLlm){ return reply(origin,503,{error:"setup",missing:"llm"}); }
   var q=String((body&&body.q)||"").trim().slice(0,200);
