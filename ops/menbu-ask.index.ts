@@ -144,6 +144,37 @@ function menbuCandidates(lat,lon,maxD){
   if(lat!=null){ out.sort(function(a,b){ return a.d-b.d; }); }
   return out;
 }
+// ===== 近くの麺の店（地図の「ほかの麺の店」用。ホットペッパーから取る。AIは使わないので費用はかからない） =====
+var NEAR_CACHE = new Map();
+async function hpNear(key,lat,lon,r){
+  var range=r<=300?1:r<=500?2:r<=1000?3:r<=2000?4:5;
+  var ck=lat.toFixed(3)+","+lon.toFixed(3)+","+range;
+  var hit=NEAR_CACHE.get(ck);
+  if(hit&&Date.now()-hit.t<600000){ return hit.v; }
+  async function call(extra){
+    var u=new URL("https://webservice.recruit.co.jp/hotpepper/gourmet/v1/");
+    u.searchParams.set("key",key); u.searchParams.set("lat",String(lat)); u.searchParams.set("lng",String(lon));
+    u.searchParams.set("range",String(range)); u.searchParams.set("count","100"); u.searchParams.set("format","json");
+    Object.keys(extra).forEach(function(k){ u.searchParams.set(k,extra[k]); });
+    var res=await fetch(u,{headers:{accept:"application/json","user-agent":"menbu-map/1.0"}});
+    if(!res.ok){ throw new Error("hotpepper "+res.status); }
+    var j=await res.json();
+    return (j&&j.results&&Array.isArray(j.results.shop))?j.results.shop:[];
+  }
+  var lists=await Promise.all([call({genre:"G013"}),call({keyword:"そば"}).catch(function(){ return []; }),call({keyword:"うどん"}).catch(function(){ return []; })]);
+  var seen={}, out=[];
+  lists.forEach(function(arr,li){
+    arr.forEach(function(s){
+      if(seen[s.id]){ return; } seen[s.id]=1;
+      var la=Number(s.lat), lo=Number(s.lng);
+      if(!Number.isFinite(la)||!Number.isFinite(lo)){ return; }
+      out.push({name:String(s.name||"").slice(0,60),lat:la,lon:lo,kind:li===0?"ラーメン":(li===1?"そば":"うどん"),genre:(s.genre&&s.genre.name)||"",uri:(s.urls&&s.urls.pc)||""});
+    });
+  });
+  if(NEAR_CACHE.size>300){ NEAR_CACHE.clear(); }
+  NEAR_CACHE.set(ck,{t:Date.now(),v:out});
+  return out;
+}
 // ===== 麺部Tシャツの予約（部員向け。支払いは例会で手渡し） =====
 var TS_IP_CAP = 5; // 同じ相手からの予約は1日5件まで
 function jstToday(){ return new Date(Date.now()+9*3600*1000).toISOString().slice(0,10); }
@@ -182,6 +213,17 @@ Deno.serve(async function(req){
   var hasLlm=!!(ANTHROPIC_KEY||OPENAI_KEY);
   try{ await loadShops(); }catch(e){}
   if(req.method==="GET"){
+    var sp=new URL(req.url).searchParams;
+    if(sp.get("near")){
+      if(!origin||!ORIGIN_RE.test(origin)){ return reply(origin,403,{error:"origin"}); }
+      var nla=Number(sp.get("lat")), nlo=Number(sp.get("lon")), nr=Number(sp.get("r"))||1000;
+      if(!(nla>41&&nla<46&&nlo>139&&nlo<146.5)){ return reply(origin,400,{error:"where"}); }
+      try{
+        var nk=await hotpepperKey();
+        if(!nk){ return reply(origin,503,{error:"setup"}); }
+        return reply(origin,200,{shops:await hpNear(nk,nla,nlo,Math.min(Math.max(nr,300),5000))});
+      }catch(e){ console.error("near",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); }
+    }
     if(new URL(req.url).searchParams.get("tshirt")){
       try{
         var c=await tshirtConfig();

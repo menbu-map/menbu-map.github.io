@@ -161,6 +161,7 @@ footer p{margin:0 0 4px}
   </div>
   <p id="status" aria-live="polite">朱色の印は麺部の店です。「現在地から探す」を押すと近い順に並びます。</p>
   <ul id="list"></ul>
+  <p id="hpattr" class="gattr" hidden>未開拓の店の情報の一部：Powered by <a href="https://webservice.recruit.co.jp/" target="_blank" rel="noopener">ホットペッパーグルメ Webサービス</a></p>
   <footer>
     <p><span id="mapattr">地図：国土地理院。</span>麺部の店のうち位置を確認できた24軒は、いつでも朱色の印で表示します。</p>
     <p>それ以外の店の位置はOpenStreetMapの登録データです。登録されていない店は表示されません。</p>
@@ -254,6 +255,7 @@ var MENBU = [
 var SEEDS = [[0,43.062504,141.353851],[1,43.055187,141.352646],[2,43.056427,141.356827],[3,43.046557,141.357337],[4,43.051092,141.354661],[6,43.044788,141.375656],[8,43.054134,141.343001],[9,43.119373,141.348923],[11,43.074932,141.276459],[12,43.055808,141.351834],[14,42.903275,141.579697],[22,43.048597,141.337363],[25,43.070265,141.333299],[27,43.130668,141.355018],[31,43.012121,141.420278],[41,43.099463,141.402868],[44,43.053405,141.354089],[48,43.038968,141.347171],[62,43.423504,141.884471],[5,43.045885,141.356630],[13,43.144699,141.146133],[24,43.023470,141.356794],[33,43.057224,141.350433],[38,43.121273,141.314941]];
 var SEEDSET = {}; SEEDS.forEach(function(s){ SEEDSET[s[0]]=s; });
 var AREA_TXT = {"0": "札幌駅と大通の間（北1条西2）", "1": "すすきの（ココノ ススキノ）", "2": "すすきの（南4条西1）", "3": "中島公園の近く", "4": "中島公園の近く（南8条西3）", "5": "中島公園の近く（南12条西1）", "6": "豊平区豊平（豊平公園駅の近く）", "8": "中央区南4条西10", "9": "東区北49条東4", "11": "西区西野", "12": "すすきの（南3条西4）", "13": "小樽市銭函", "14": "恵庭市恵み野", "22": "中央区南8条西13", "24": "豊平区中の島", "25": "中央区北8条西13", "27": "北区太平", "31": "豊平区月寒東", "33": "狸小路の近く（南2条西5）", "38": "北区新琴似", "41": "東区伏古", "44": "すすきの（南6条西3）", "48": "中央区南16条西9", "62": "奈井江町"};
+var API_NEAR="https://uvdodybrxmllldazdtbu.supabase.co/functions/v1/menbu-ask", searchToken=null, usedHp=false;
 var ENDPOINTS = ["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://overpass.private.coffee/api/interpreter"];
 var NOODLE_WORDS = "ラーメン|らーめん|らぁ麺|らあめん|拉麺|麺|麵|そば|蕎麦|うどん";
 var NOODLE_RE = new RegExp(NOODLE_WORDS);
@@ -407,12 +409,37 @@ function seedResults(lat,lon,r){
 function search(lat,lon,showMe){
   if(busy){ return; }
   var r=Number(document.getElementById("rad").value);
-  setBusy(true); hasOrigin=true;
+  setBusy(true); hasOrigin=true; searchToken={};
   last={lat:lat,lon:lon,showMe:showMe}; lastR=r;
   M.me(lat,lon,r,showMe);
   results=seedResults(lat,lon,r);
   if(document.getElementById("only").checked){ setBusy(false); render("ok"); return; }
   render("loading");
+  // ほかの麺の店：ホットペッパー（速くて安定）とOpenStreetMapを同時に取り、届いた順に足す。両方だめなときだけ失敗にする
+  var token={}; searchToken=token;
+  function addShop(name,la,lo,mi,kd,cui){
+    for(var k=0;k<results.length;k++){ var y=results[k]; if(dist(la,lo,y.lat,y.lon)<60&&(norm(y.name)===norm(name)||norm(y.name).indexOf(norm(name))>=0||norm(name).indexOf(norm(y.name))>=0)){ return; } }
+    results.push({name:name,lat:la,lon:lo,mi:mi,kind:kd,cui:cui||"",d:dist(lat,lon,la,lo)});
+  }
+  function seedNear(la,lo,mi){ return mi>=0&&SEEDSET[mi]&&dist(la,lo,SEEDSET[mi][1],SEEDSET[mi][2])<300; }
+  var pending=2, gotAny=false;
+  function done(ok){
+    if(searchToken!==token){ return; }
+    if(ok){ gotAny=true; results.sort(function(a,b){ return a.d-b.d; }); }
+    pending--;
+    if(ok||pending===0){ if(ok||pending===0){ setBusy(false); } render(gotAny?(pending?"partial":"ok"):(pending?"loading":"failed")); }
+  }
+  fetch(API_NEAR+"?near=1&lat="+lat.toFixed(5)+"&lon="+lon.toFixed(5)+"&r="+r).then(function(res){ if(!res.ok){ throw new Error(res.status); } return res.json(); }).then(function(j){
+    (j.shops||[]).forEach(function(s){
+      if(dist(lat,lon,s.lat,s.lon)>r){ return; }
+      var mi=matchMenbu(s.name,s.lat,s.lon);
+      if(seedNear(s.lat,s.lon,mi)){ return; }
+      if(mi>=0&&SEEDSET[mi]){ mi=-1; }
+      addShop(s.name,s.lat,s.lon,mi,s.kind,s.genre);
+    });
+    usedHp=true; document.getElementById("hpattr").hidden=false;
+    done(true);
+  }).catch(function(){ done(false); });
   callOverpass(buildQuery(lat,lon,r),0).then(function(data){
     var seen={};
     (data.elements||[]).forEach(function(e){
@@ -426,15 +453,10 @@ function search(lat,lon,showMe){
         mi=-1;
       }
       if(mi<0 && !(CUISINE_RE.test(t.cuisine||"")||NOODLE_RE.test(name))){ return; }
-      results.push({name:name,lat:la,lon:lo,mi:mi,kind:kind(t,name),cui:t.cuisine||"",d:dist(lat,lon,la,lo)});
+      addShop(name,la,lo,mi,kind(t,name),t.cuisine||"");
     });
-    results.sort(function(a,b){ return a.d-b.d; });
-    setBusy(false);
-    render("ok");
-  }).catch(function(){
-    setBusy(false);
-    render("failed");
-  });
+    done(true);
+  }).catch(function(){ done(false); });
 }
 function render(state){
   var only=document.getElementById("only").checked;
@@ -481,6 +503,7 @@ function render(state){
   var busyNote="ほかの麺の店は、データのサーバーが混雑していて取得できませんでした。少し待ってからもう一度押してください。";
   if(state==="init"){ statusEl.textContent="朱色の印は麺部の店です（"+SEEDS.length+"軒）。「現在地から探す」を押すと近い順に並びます。"; return; }
   if(state==="loading"){ statusEl.textContent="麺部の店 "+menbu+"軒を表示。ほかの麺の店を探しています…"; return; }
+  if(state==="partial"){ statusEl.textContent=shown+"軒を近い順に表示（うち麺部の店 "+menbu+"軒）。ほかの店をもう少し探しています…"; return; }
   if(state==="failed"){ statusEl.textContent=(menbu?"麺部の店 "+menbu+"軒を表示。":"条件に合う麺部の店はありません。")+busyNote; return; }
   if(!shown){ statusEl.textContent="条件に合う店は見つかりませんでした。範囲を広げるか、条件をゆるめてください。"; return; }
   statusEl.textContent=shown+"軒を近い順に表示（うち麺部の店 "+menbu+"軒）";
