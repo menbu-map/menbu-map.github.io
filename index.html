@@ -102,6 +102,11 @@ footer p{margin:0 0 4px}
 .detail .dfoot a{font-weight:700;color:var(--sumi)}
 .gmark{font-family:Roboto,Arial,sans-serif;font-size:12px;color:#5f6368}
 .pop .gbtn{display:inline-block;margin-top:6px;font-weight:700;color:#141414;border:1.5px solid #141414;border-radius:4px;padding:5px 8px;text-decoration:none}
+[hidden]{display:none!important}
+.tabs{position:sticky;top:0;z-index:1000;display:flex;background:var(--sumi);border-top:1px solid #333}
+.tabs button{flex:1 1 0;font:inherit;font-size:16px;font-weight:700;letter-spacing:.08em;padding:12px 8px;border:0;background:transparent;color:#bdbab2;cursor:pointer;border-bottom:4px solid transparent}
+.tabs button[aria-selected="true"]{color:#fff;border-bottom-color:#fff}
+.shopnone{margin:0;font-size:14px;color:var(--sub)}
 </style>
 </head>
 <body>
@@ -110,7 +115,11 @@ footer p{margin:0 0 4px}
   <p class="en">MENBU MAP</p>
   <p class="lead">いまいる場所の近くで麺の店を探します。朱色の印は、麺部のLINEに上がった店です。</p>
 </header>
-<div class="wrap">
+<nav class="tabs" role="tablist" aria-label="ページの切り替え">
+  <button type="button" role="tab" id="tab-map" aria-controls="pane-map" aria-selected="true">【MAP】</button>
+  <button type="button" role="tab" id="tab-shop" aria-controls="pane-shop" aria-selected="false">【SHOP】</button>
+</nav>
+<div class="wrap" id="pane-map" role="tabpanel" aria-labelledby="tab-map">
   <section class="ai">
     <h2>麺部AIに聞く</h2>
     <form id="aiform">
@@ -123,21 +132,6 @@ footer p{margin:0 0 4px}
     <p id="aistatus" aria-live="polite"></p>
     <div id="aiout"></div>
     <p id="gattr" class="gattr" hidden>未開拓の店の情報：Powered by <a href="https://webservice.recruit.co.jp/" target="_blank" rel="noopener">ホットペッパーグルメ Webサービス</a></p>
-  </section>
-  <section id="tshirt" class="ai ts" hidden>
-    <h2 id="tstitle">麺部Tシャツ 予約</h2>
-    <p id="tsinfo" class="tsinfo"></p>
-    <form id="tsform">
-      <label for="tsname">お名前（LINEの表示名）<input id="tsname" type="text" maxlength="30" autocomplete="nickname" required></label>
-      <div class="tsrow">
-        <label for="tssize">サイズ<select id="tssize" required></select></label>
-        <label for="tscolor" id="tscolorwrap" hidden>色<select id="tscolor"></select></label>
-        <label for="tsqty">枚数<select id="tsqty"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
-      </div>
-      <label for="tsnote">ひとこと（任意）<input id="tsnote" type="text" maxlength="100" placeholder="例：次の例会は欠席なので○月の会で受け取りたい"></label>
-      <button type="submit" id="tsgo">予約する</button>
-    </form>
-    <p id="tsstatus" aria-live="polite"></p>
   </section>
   <form id="find" class="find">
     <label for="place">場所<input id="place" type="text" autocomplete="off" placeholder="例：札幌駅、麻生、すすきの"></label>
@@ -169,6 +163,24 @@ footer p{margin:0 0 4px}
     <p>「未開拓」は、まだ麺部の投稿がない店です。キーワードは店名・ジャンル・麺部のメモに含まれる言葉で探します。評価や営業時間は出ません。</p>
     <p>麺部の店かどうかは店名の一致で判定しています。同じ名前の別の店に朱色の印がつくことがあります。</p>
   </footer>
+</div>
+<div class="wrap" id="pane-shop" role="tabpanel" aria-labelledby="tab-shop" hidden>
+  <section id="tshirt" class="ai ts" hidden>
+    <h2 id="tstitle">麺部Tシャツ 予約</h2>
+    <p id="tsinfo" class="tsinfo"></p>
+    <form id="tsform">
+      <label for="tsname">お名前（LINEの表示名）<input id="tsname" type="text" maxlength="30" autocomplete="nickname" required></label>
+      <div class="tsrow">
+        <label for="tssize">サイズ<select id="tssize" required></select></label>
+        <label for="tscolor" id="tscolorwrap" hidden>色<select id="tscolor"></select></label>
+        <label for="tsqty">枚数<select id="tsqty"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+      </div>
+      <label for="tsnote">ひとこと（任意）<input id="tsnote" type="text" maxlength="100" placeholder="例：次の例会は欠席なので○月の会で受け取りたい"></label>
+      <button type="submit" id="tsgo">予約する</button>
+    </form>
+    <p id="tsstatus" aria-live="polite"></p>
+  </section>
+  <p id="shopnone" class="shopnone">いま受付中の商品はありません。</p>
 </div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
@@ -610,12 +622,12 @@ document.getElementById("find").addEventListener("submit",function(ev){
     if(!c.open){
       // 受付前（締切が未設定）は予告だけ出す。締切を過ぎたら出さない
       if(c.deadline){ return; }
-      box.hidden=false; document.getElementById("tsform").hidden=true;
+      box.hidden=false; document.getElementById("tsform").hidden=true; document.getElementById("shopnone").hidden=true;
       document.getElementById("tstitle").textContent=c.title||"麺部Tシャツ";
       document.getElementById("tsinfo").textContent="coming soon...\n予約が始まったらここから申し込めます。";
       return;
     }
-    cfg=c; box.hidden=false; document.getElementById("tsform").hidden=false;
+    cfg=c; box.hidden=false; document.getElementById("tsform").hidden=false; document.getElementById("shopnone").hidden=true;
     document.getElementById("tstitle").textContent=(c.title||"麺部Tシャツ")+" 予約";
     var d=c.deadline?c.deadline.replace(/^(\d+)-(\d+)-(\d+)$/,function(_,y,m,dd){ return Number(m)+"月"+Number(dd)+"日"; }):"";
     document.getElementById("tsinfo").textContent="1枚 "+Number(c.price).toLocaleString()+"円　締切 "+d+"\n"+(c.handover||"")+(c.note?"\n"+c.note:"")+"\n今の予約："+(c.total||0)+"枚";
@@ -738,6 +750,21 @@ fetch("https://uvdodybrxmllldazdtbu.supabase.co/functions/v1/menbu-ask?shops=1")
   KEYS=MENBU.map(function(m){ return m[2].map(norm); });
   if(!last&&!busy){ results=seedResults(43.0608,141.3545,1e9); render("init"); }
 }).catch(function(){});
+
+// 【MAP】【SHOP】のタブ。#shop で直接開ける
+(function(){
+  var tm=document.getElementById("tab-map"), tsb=document.getElementById("tab-shop"), pm=document.getElementById("pane-map"), ps=document.getElementById("pane-shop");
+  function show(shop,push){
+    pm.hidden=shop; ps.hidden=!shop;
+    tm.setAttribute("aria-selected",String(!shop)); tsb.setAttribute("aria-selected",String(shop));
+    if(push){ history.replaceState(null,"",shop?"#shop":location.pathname+location.search); }
+    if(!shop){ setTimeout(function(){ window.dispatchEvent(new Event("resize")); if(window.LMAP&&LMAP.invalidateSize){ LMAP.invalidateSize(); } },50); }
+    window.scrollTo(0,0);
+  }
+  tm.addEventListener("click",function(){ show(false,true); });
+  tsb.addEventListener("click",function(){ show(true,true); });
+  if(location.hash==="#shop"){ show(true,false); }
+})();
 </script>
 </body>
 </html>
