@@ -1026,6 +1026,7 @@ window.addEventListener("resize",function(){ setSheet(sheetState); if(M.resize){
   document.getElementById("wgo").addEventListener("click",function(){ done(); document.getElementById("here").click(); });
   document.getElementById("wskip").addEventListener("click",done);
   if(!seen&&location.hash!=="#shop"&&!/^#s=/.test(location.hash)){ w.hidden=false; document.getElementById("wgo").focus(); return; }
+  if(/^#s=/.test(location.hash)){ return; }
   if(navigator.permissions&&navigator.permissions.query){
     navigator.permissions.query({name:"geolocation"}).then(function(p){ if(p.state==="granted"&&!last){ document.getElementById("here").click(); } }).catch(function(){});
   }
