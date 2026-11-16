@@ -15,15 +15,9 @@
   --brush:"Yuji Boku","Yuji Syuku","Hiragino Mincho ProN","Yu Mincho",serif;
   --body:"Zen Kaku Gothic New","Hiragino Sans","Yu Gothic","Noto Sans JP",system-ui,sans-serif}
 *{box-sizing:border-box}
-html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6}
-header.top{background:var(--sumi);color:#fff;padding:26px 16px 20px;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
-.badge{width:172px;height:172px;border-radius:50%;background:#fff;color:var(--sumi);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
-.crest{width:84px;height:84px;display:block}
-h1{margin:0;font-family:var(--brush);font-weight:400;font-size:38px;line-height:1.1;letter-spacing:.12em;padding-left:.12em}
+html,body{margin:0;height:100%}
+body{overflow:hidden;overscroll-behavior:none;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6}
 .en{margin:0;font-size:13px;font-weight:700;letter-spacing:.42em;padding-left:.42em}
-.lead{margin:0;font-size:14px;color:#d8d6cf;max-width:34em}
-.wrap{max-width:760px;margin:0 auto;padding:16px 16px 40px;display:flex;flex-direction:column;gap:12px}
 .ai{background:var(--card);border:2px solid var(--sumi);border-radius:4px;padding:12px;display:flex;flex-direction:column;gap:8px}
 .ai h2{margin:0;font-family:var(--brush);font-weight:400;font-size:22px}
 .ai form{display:flex;flex-direction:column;gap:8px}
@@ -52,22 +46,13 @@ h1{margin:0;font-family:var(--brush);font-weight:400;font-size:38px;line-height:
 .aicard p{margin:0;font-size:14px;overflow-wrap:anywhere}
 .aicard .name{font-size:20px}
 .aicard a{align-self:flex-start;font-size:14px;font-weight:700;border-radius:4px;padding:7px 12px;border:1px solid var(--sumi);color:var(--sumi);text-decoration:none}
+.acts a.primary{background:var(--sumi);color:#fff}
+.detail .dhead{align-items:center}
+.detail .dhead .name{margin:0}
+li[role=button]{cursor:pointer}
 .gattr{margin:0;font-size:12px;color:var(--sub)}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
-.find{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:end}
-.find label{display:flex;flex-direction:column;gap:2px;font-size:13px;font-weight:700}
-.find input{font:inherit;font-size:16px;font-weight:400;padding:9px 10px;border:1px solid var(--sumi);border-radius:4px;background:var(--card);color:var(--ink);min-width:0;width:100%}
-.find button{grid-column:1 / -1;font:inherit;font-size:16px;font-weight:700;border-radius:4px;padding:11px 14px;cursor:pointer;border:2px solid var(--sumi);background:var(--sumi);color:#fff}
-.find button:disabled{opacity:.5;cursor:default}
 .tag.n{background:transparent;border:1px dashed var(--sub);color:var(--sub)}
-#map{height:46vh;min-height:280px;border:2px solid var(--sumi);border-radius:4px;background:var(--chip);z-index:0}
-.ctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.ctl button{font:inherit;font-size:15px;font-weight:700;border-radius:4px;padding:10px 14px;cursor:pointer;border:2px solid var(--sumi)}
-#here{background:var(--card);color:var(--sumi)}
-#center{background:var(--card);color:var(--sumi)}
-.ctl button:disabled{opacity:.5;cursor:default}
-.ctl select{font:inherit;font-size:15px;padding:9px 8px;border:1px solid var(--line);border-radius:4px;background:var(--card);color:var(--ink)}
-.ctl label{display:flex;gap:6px;align-items:center;font-size:14px}
 button:focus-visible,a:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--shu);outline-offset:2px}
 #status{margin:0;font-size:14px;color:var(--sub);min-height:1.6em}
 ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
@@ -82,10 +67,6 @@ li.menbu{border-left-color:var(--shu)}
 .note{margin:0;font-size:14px;overflow-wrap:anywhere}
 .acts{display:flex;gap:8px;flex-wrap:wrap}
 .acts a,.acts button{font:inherit;font-size:14px;font-weight:700;border-radius:4px;padding:7px 12px;border:1px solid var(--sumi);background:transparent;color:var(--sumi);text-decoration:none;cursor:pointer}
-footer{font-size:12px;color:var(--sub);border-top:1px solid var(--line);padding-top:10px}
-footer p{margin:0 0 4px}
-.pop b{font-size:14px}
-.detail{border:2px solid var(--sumi);border-radius:4px;padding:12px;margin:10px 0;background:#fff}
 .detail .dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
 .detail h3{margin:0;font-size:18px}
 .detail .dclose{font:inherit;font-size:14px;border:1px solid var(--sumi);background:transparent;border-radius:4px;padding:4px 10px;cursor:pointer}
@@ -101,62 +82,104 @@ footer p{margin:0 0 4px}
 .detail .dfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:13px}
 .detail .dfoot a{font-weight:700;color:var(--sumi)}
 .gmark{font-family:Roboto,Arial,sans-serif;font-size:12px;color:#5f6368}
-.pop .gbtn{display:inline-block;margin-top:6px;font-weight:700;color:#141414;border:1.5px solid #141414;border-radius:4px;padding:5px 8px;text-decoration:none}
 [hidden]{display:none!important}
-.aifab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:3000;font:inherit;font-size:15px;font-weight:700;color:#fff;background:var(--sumi);border:2px solid #fff;border-radius:999px;padding:12px 18px;box-shadow:0 4px 14px rgba(0,0,0,.35);cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
-.aifab.drag{cursor:grabbing;opacity:.85}
-.aipanel{position:fixed;z-index:3001;right:12px;bottom:calc(12px + env(safe-area-inset-bottom));width:min(480px,calc(100vw - 24px));max-height:min(78vh,640px);overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.35)}
-.aihead{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.aiclose{font:inherit;font-size:24px;line-height:1;width:40px;height:40px;border:0;background:transparent;color:var(--ink);cursor:pointer}
-.tabs{position:sticky;top:0;z-index:1000;display:flex;background:var(--sumi);border-top:1px solid #333}
-.tabs button{flex:1 1 0;font:inherit;font-size:16px;font-weight:700;letter-spacing:.08em;padding:12px 8px;border:0;background:transparent;color:#bdbab2;cursor:pointer;border-bottom:4px solid transparent}
-.tabs button[aria-selected="true"]{color:#fff;border-bottom-color:#fff}
+.bar{position:fixed;top:0;left:0;right:0;height:48px;z-index:1200;background:var(--sumi);color:#fff;display:flex;align-items:center;gap:6px;padding:0 8px 0 10px}
+.brand{display:flex;align-items:center;gap:8px;margin-right:auto;min-width:0}
+.crest.sm{width:30px;height:30px;background:#fff;border-radius:50%;padding:1px}
+.bt{font-family:var(--brush);font-size:22px;line-height:1}
+.bs{font-size:10px;font-weight:700;letter-spacing:.3em;color:#cfcdc6;white-space:nowrap}
+.barbtn{font:inherit;font-size:14px;font-weight:700;letter-spacing:.08em;color:#fff;background:transparent;border:1.5px solid #fff;border-radius:999px;padding:5px 14px;min-height:34px;cursor:pointer}
+.barbtn.ib{width:34px;padding:0;font-family:Georgia,serif;font-style:italic}
+#map{position:fixed;top:48px;left:0;right:0;bottom:118px;z-index:0;background:var(--chip)}
+.ov{position:fixed;top:56px;left:8px;right:8px;z-index:1100;display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.ov>*{pointer-events:auto}
+.sbar{display:flex;align-items:center;background:#fff;border:2px solid var(--sumi);border-radius:999px;box-shadow:0 2px 8px rgba(0,0,0,.18);padding:3px 4px 3px 14px;gap:4px}
+.sbar input{flex:1 1 auto;min-width:0;font:inherit;font-size:16px;border:0;outline:0;background:transparent;color:var(--ink);padding:7px 0}
+.sgo{flex:0 0 auto;width:40px;height:40px;border:0;border-radius:50%;background:transparent;color:var(--sumi);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.saibtn{flex:0 0 auto;font:inherit;font-size:14px;font-weight:700;color:#fff;background:var(--sumi);border:0;border-radius:999px;padding:0 14px;height:40px;cursor:pointer}
+.chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;align-self:flex-start;max-width:100%;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:0 0 auto;font:inherit;font-size:13px;font-weight:700;color:var(--ink);background:#fff;border:1.5px solid var(--sumi);border-radius:999px;padding:5px 12px;min-height:34px;cursor:pointer;display:flex;align-items:center;gap:4px;box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.chip[aria-pressed="true"]{background:var(--sumi);color:#fff}
+.chip input{position:absolute;opacity:0;pointer-events:none}
+.chip.shu:has(input:checked){background:var(--shu);border-color:var(--shu);color:#fff}
+.chip.shu:has(input:focus-visible){outline:3px solid var(--shu);outline-offset:2px}
+.areabtn{align-self:center;font:inherit;font-size:14px;font-weight:700;color:var(--sumi);background:#fff;border:2px solid var(--sumi);border-radius:999px;padding:7px 16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.locbtn{position:fixed;right:12px;bottom:calc(var(--sheet-h,132px) + 12px);z-index:1100;width:48px;height:48px;border-radius:50%;border:2px solid var(--sumi);background:#fff;color:#1a73e8;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.25);transition:bottom .2s}
+.locbtn:disabled{opacity:.6}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:1150;height:var(--sheet-h,132px);background:var(--bg);border-top:2px solid var(--sumi);border-radius:14px 14px 0 0;box-shadow:0 -4px 16px rgba(0,0,0,.18);display:flex;flex-direction:column;transition:height .2s}
+.sheet.dragging,.sheet.dragging~.locbtn{transition:none}
+.grab{flex:0 0 auto;height:26px;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none}
+.grab span{width:44px;height:5px;border-radius:3px;background:#b9b7af}
+.sbody{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding:0 12px calc(16px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:8px}
+#status{font-weight:700;color:var(--ink)}
+.detail{border:2px solid var(--sumi);border-radius:6px;padding:12px;background:#fff;display:flex;flex-direction:column;gap:6px}
+.detail .dg:empty{display:none}
+.panel{position:fixed;z-index:1300;top:56px;left:8px;right:8px;margin:0 auto;max-width:520px;max-height:calc(100dvh - 72px);overflow:auto;background:#fff;border:2px solid var(--sumi);border-radius:8px;padding:12px 14px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.panel p{margin:0 0 8px;font-size:14px}
+.panel .small{font-size:12px;color:var(--sub)}
+.phead,.aihead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.phead h2,.aihead h2{margin:0;font-family:var(--brush);font-weight:400;font-size:22px}
+.xbtn{font:inherit;font-size:26px;line-height:1;width:44px;height:44px;border:0;background:transparent;color:var(--ink);cursor:pointer;flex:0 0 auto}
+#aipanel{position:fixed;z-index:1300;top:56px;left:8px;right:8px;margin:0 auto;max-width:520px;max-height:calc(100dvh - 72px);overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+#shoppanel .ai{border:0;padding:0}
 .shopnone{margin:0;font-size:14px;color:var(--sub)}
+.welcome{position:fixed;inset:0;z-index:1400;background:rgba(20,20,20,.72);display:flex;align-items:center;justify-content:center;padding:16px}
+.wcard{background:var(--sumi);color:#fff;border-radius:12px;padding:24px 18px;max-width:360px;width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+.wcard p{margin:0;font-size:14px;color:#e2e0d9}
+.badge{width:150px;height:150px;border-radius:50%;background:#fff;color:var(--sumi);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.crest{width:74px;height:74px;display:block}
+.wcard .wt{margin:0;font-family:var(--brush);font-size:32px;line-height:1.1;letter-spacing:.12em;color:var(--sumi)!important}
+.wgo{font:inherit;font-size:16px;font-weight:700;width:100%;padding:12px;border-radius:6px;border:0;background:#fff;color:var(--sumi);cursor:pointer;margin-top:6px}
+.wskip{font:inherit;font-size:14px;background:transparent;border:0;color:#cfcdc6;text-decoration:underline;cursor:pointer;padding:6px}
+@media (min-width:900px){
+  .sheet{top:48px;left:0;right:auto;width:400px;height:auto!important;border-top:0;border-right:2px solid var(--sumi);border-radius:0;box-shadow:none}
+  .grab{display:none}
+  .sbody{padding-top:12px}
+  #map{left:400px;bottom:0}
+  .ov{left:412px;right:12px;max-width:560px}
+  .locbtn{bottom:24px!important;right:16px}
+  .panel,#aipanel{left:auto;right:16px;width:440px}
+}
+
+.aihead{display:flex;align-items:center;justify-content:space-between;gap:8px}
 </style>
 </head>
 <body>
-<header class="top">
-  <div class="badge"><svg class="crest" viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="cc"><circle cx="50" cy="50" r="33"/></clipPath></defs><circle cx="50" cy="50" r="44" fill="none" stroke="#141414" stroke-width="9"/><g clip-path="url(#cc)"><rect width="100" height="100" fill="#141414"/><g fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round"><path d="M8 37 q10.5 -9 21 0 t21 0 t21 0 t21 0"/><path d="M8 51 q10.5 -9 21 0 t21 0 t21 0 t21 0"/><path d="M8 65 q10.5 -9 21 0 t21 0 t21 0 t21 0"/></g><g stroke-linecap="round"><path d="M66 10 L45 92" stroke="#141414" stroke-width="8"/><path d="M76 13 L55 95" stroke="#141414" stroke-width="8"/><path d="M66 10 L45 92" stroke="#fff" stroke-width="3.2"/><path d="M76 13 L55 95" stroke="#fff" stroke-width="3.2"/></g></g></svg><h1>麺部</h1></div>
-  <p class="en">MENBU MAP</p>
-  <p class="lead">いまいる場所の近くで麺の店を探します。朱色の印は、麺部のLINEに上がった店です。</p>
+<header class="bar">
+  <div class="brand"><svg class="crest sm" viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="cc"><circle cx="50" cy="50" r="33"/></clipPath></defs><circle cx="50" cy="50" r="44" fill="none" stroke="#141414" stroke-width="9"/><g clip-path="url(#cc)"><rect width="100" height="100" fill="#141414"/><g fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round"><path d="M8 37 q10.5 -9 21 0 t21 0 t21 0 t21 0"/><path d="M8 51 q10.5 -9 21 0 t21 0 t21 0 t21 0"/><path d="M8 65 q10.5 -9 21 0 t21 0 t21 0 t21 0"/></g><g stroke-linecap="round"><path d="M66 10 L45 92" stroke="#141414" stroke-width="8"/><path d="M76 13 L55 95" stroke="#141414" stroke-width="8"/><path d="M66 10 L45 92" stroke="#fff" stroke-width="3.2"/><path d="M76 13 L55 95" stroke="#fff" stroke-width="3.2"/></g></g></svg><span class="bt">麺部</span><span class="bs">MENBU MAP</span></div>
+  <button type="button" id="openshop" class="barbtn">SHOP</button>
+  <button type="button" id="openinfo" class="barbtn ib" aria-label="このマップについて">i</button>
 </header>
-<nav class="tabs" role="tablist" aria-label="ページの切り替え">
-  <button type="button" role="tab" id="tab-map" aria-controls="pane-map" aria-selected="true">【MAP】</button>
-  <button type="button" role="tab" id="tab-shop" aria-controls="pane-shop" aria-selected="false">【SHOP】</button>
-</nav>
-<div class="wrap" id="pane-map" role="tabpanel" aria-labelledby="tab-map">
-  <form id="find" class="find">
-    <label for="place">場所<input id="place" type="text" autocomplete="off" placeholder="例：札幌駅、麻生、すすきの"></label>
-    <label for="kw">麺・店名<input id="kw" type="text" autocomplete="off" placeholder="例：つけ麺、味噌、そば"></label>
-    <button type="submit" id="go">この条件で探す</button>
+<div id="map" role="application" aria-label="地図"></div>
+<div class="ov">
+  <form id="find" class="sbar" role="search">
+    <label for="q" class="vh">場所・麺・店名</label>
+    <input id="q" type="search" enterkeyhint="search" autocomplete="off" placeholder="札幌駅 つけ麺／店名">
+    <button type="submit" id="go" class="sgo" aria-label="探す"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5" fill="none" stroke="currentColor" stroke-width="2.4"/><path d="M15.5 15.5 21 21" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+    <button type="button" id="aiopen" class="saibtn" aria-controls="aipanel" aria-expanded="false">麺AI</button>
   </form>
-  <div id="map" role="application" aria-label="地図"></div>
-  <section id="detail" class="detail" hidden aria-live="polite"></section>
-  <div class="ctl">
-    <button type="button" id="here">現在地から探す</button>
-    <button type="button" id="center">地図の中心で探す</button>
-    <label for="rad">範囲
-      <select id="rad">
-        <option value="500">500m</option>
-        <option value="1000" selected>1km</option>
-        <option value="2000">2km</option>
-        <option value="5000">5km</option>
-      </select>
-    </label>
-    <label for="only"><input type="checkbox" id="only">巡礼の店だけ（麺部の投稿がある店）</label>
+  <div class="chips" role="group" aria-label="絞り込み">
+    <label class="chip shu"><input type="checkbox" id="only">巡礼の店</label>
+    <button type="button" class="chip" data-kw="ラーメン" aria-pressed="false">ラーメン</button>
+    <button type="button" class="chip" data-kw="つけ麺" aria-pressed="false">つけ麺</button>
+    <button type="button" class="chip" data-kw="そば" aria-pressed="false">そば</button>
+    <button type="button" class="chip" data-kw="うどん" aria-pressed="false">うどん</button>
   </div>
-  <p id="status" aria-live="polite">朱色の印は麺部の店です。「現在地から探す」を押すと近い順に並びます。</p>
-  <ul id="list"></ul>
-  <p id="hpattr" class="gattr" hidden>未開拓の店の情報の一部：Powered by <a href="https://webservice.recruit.co.jp/" target="_blank" rel="noopener">ホットペッパーグルメ Webサービス</a></p>
-  <footer>
-    <p><span id="mapattr">地図：国土地理院。</span>麺部の店のうち位置を確認できた24軒は、いつでも朱色の印で表示します。</p>
-    <p>それ以外の店の位置はOpenStreetMapの登録データです。登録されていない店は表示されません。</p>
-    <p>麺部AIは、質問に合う店を候補から選んで答えます。「巡礼の店だけ」にチェックすると、麺部の投稿がある店だけから答えます。「現在地から探す」を押したあとは、現在地からの距離も踏まえます。</p>
-    <p>「未開拓」は、まだ麺部の投稿がない店です。キーワードは店名・ジャンル・麺部のメモに含まれる言葉で探します。評価や営業時間は出ません。</p>
-    <p>麺部の店かどうかは店名の一致で判定しています。同じ名前の別の店に朱色の印がつくことがあります。</p>
-  </footer>
+  <button type="button" id="area" class="areabtn" hidden>このエリアで探す</button>
 </div>
-<div class="wrap" id="pane-shop" role="tabpanel" aria-labelledby="tab-shop" hidden>
+<button type="button" id="here" class="locbtn" aria-label="現在地から探す"><svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true"><circle cx="12" cy="12" r="4" fill="currentColor"/><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 1v3M12 20v3M1 12h3M20 12h3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+<section id="sheet" class="sheet" aria-label="店の一覧">
+  <div id="grab" class="grab" role="button" tabindex="0" aria-label="一覧を広げる・たたむ"><span></span></div>
+  <div class="sbody" id="sbody">
+    <p id="status" aria-live="polite">麺部の店を読み込んでいます…</p>
+    <section id="detail" class="detail" hidden aria-live="polite"></section>
+    <ul id="list"></ul>
+    <p id="hpattr" class="gattr" hidden>未開拓の店の情報の一部：Powered by <a href="https://webservice.recruit.co.jp/" target="_blank" rel="noopener">ホットペッパーグルメ Webサービス</a></p>
+  </div>
+</section>
+<section id="shoppanel" class="panel" role="dialog" aria-modal="true" aria-labelledby="shoph" hidden>
+  <div class="phead"><h2 id="shoph">SHOP</h2><button type="button" class="xbtn" data-close aria-label="閉じる">×</button></div>
   <section id="tshirt" class="ai ts" hidden>
     <h2 id="tstitle">麺部Tシャツ 予約</h2>
     <p id="tsinfo" class="tsinfo"></p>
@@ -173,10 +196,24 @@ footer p{margin:0 0 4px}
     <p id="tsstatus" aria-live="polite"></p>
   </section>
   <p id="shopnone" class="shopnone">いま受付中の商品はありません。</p>
+</section>
+<section id="infopanel" class="panel" role="dialog" aria-modal="true" aria-labelledby="infoh" hidden>
+  <div class="phead"><h2 id="infoh">麺部マップについて</h2><button type="button" class="xbtn" data-close aria-label="閉じる">×</button></div>
+  <p>朱色の印は、麺部のLINEに上がった店（巡礼の店）です。黒い印は、まだ麺部の投稿がない店です。</p>
+  <p>麺部の店かどうかは店名で判定しているので、同じ名前の別の店に朱色の印がつくことがあります。</p>
+  <p class="small"><span id="mapattr">地図：国土地理院。</span>ほかの麺の店：ホットペッパーグルメ Webサービス、OpenStreetMap。</p>
+</section>
+<div id="welcome" class="welcome" hidden>
+  <div class="wcard">
+    <div class="badge"><svg class="crest" viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="cc"><circle cx="50" cy="50" r="33"/></clipPath></defs><circle cx="50" cy="50" r="44" fill="none" stroke="#141414" stroke-width="9"/><g clip-path="url(#cc)"><rect width="100" height="100" fill="#141414"/><g fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round"><path d="M8 37 q10.5 -9 21 0 t21 0 t21 0 t21 0"/><path d="M8 51 q10.5 -9 21 0 t21 0 t21 0 t21 0"/><path d="M8 65 q10.5 -9 21 0 t21 0 t21 0 t21 0"/></g><g stroke-linecap="round"><path d="M66 10 L45 92" stroke="#141414" stroke-width="8"/><path d="M76 13 L55 95" stroke="#141414" stroke-width="8"/><path d="M66 10 L45 92" stroke="#fff" stroke-width="3.2"/><path d="M76 13 L55 95" stroke="#fff" stroke-width="3.2"/></g></g></svg><p class="wt">麺部</p></div>
+    <p class="en">MENBU MAP</p>
+    <p>近くの麺の店を地図で探します。朱色の印は、麺部のLINEに上がった店です。</p>
+    <button type="button" id="wgo" class="wgo">現在地から探す</button>
+    <button type="button" id="wskip" class="wskip">地図だけ見る</button>
+  </div>
 </div>
-<button type="button" id="aifab" class="aifab" aria-controls="aipanel" aria-expanded="false">困ったら麺AI</button>
   <section class="ai aipanel" id="aipanel" role="dialog" aria-modal="false" aria-labelledby="aih" hidden>
-    <div class="aihead"><h2 id="aih">麺部AIに聞く</h2><button type="button" id="aiclose" class="aiclose" aria-label="閉じる">×</button></div>
+    <div class="aihead"><h2 id="aih">麺部AIに聞く</h2><button type="button" id="aiclose" class="xbtn" aria-label="閉じる">×</button></div>
     <form id="aiform">
       <label for="aiq" class="vh">質問</label>
       <textarea id="aiq" rows="2" placeholder="例：札幌駅の近くで、つけ麺がおいしい店は？"></textarea>
@@ -327,13 +364,17 @@ function kind(tags,name){
 function el(t,c,txt){ var n=document.createElement(t); if(c){n.className=c;} if(txt!=null){n.textContent=txt;} return n; }
 
 // 地図は2種類。Googleの鍵があればGoogleマップ（口コミ・写真つき）、なければ国土地理院の地図で動く
+// 自分で地図を動かした直後は「このエリアで探す」を出さない
+var quietUntil=0;
+function quiet(){ quietUntil=Date.now()+1200; }
+function isQuiet(){ return Date.now()<quietUntil; }
 function freshMapDiv(){
   var old=document.getElementById("map"), n=document.createElement("div");
   n.id="map"; n.setAttribute("role","application"); n.setAttribute("aria-label","地図");
   old.replaceWith(n);
 }
 function leafletMap(v){
-  var m=L.map("map").setView([v.lat,v.lon],v.z);
+  var m=L.map("map",{zoomControl:false}).setView([v.lat,v.lon],v.z);
   L.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png",{maxZoom:18,
     attribution:'<a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a> | 店データ © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(m);
   var lay=L.layerGroup().addTo(m), me=L.layerGroup().addTo(m);
@@ -341,25 +382,27 @@ function leafletMap(v){
     clear:function(){ lay.clearLayers(); },
     shop:function(lat,lon,isM,pop){
       var mk=L.circleMarker([lat,lon],isM
-        ?{radius:10,color:"#fff",weight:2,fillColor:"#c8321e",fillOpacity:1}
-        :{radius:6,color:"#fff",weight:1,fillColor:"#141414",fillOpacity:.85}).bindPopup(pop).addTo(lay);
+        ?{radius:11,color:"#fff",weight:2,fillColor:"#c8321e",fillOpacity:1}
+        :{radius:7,color:"#fff",weight:1.5,fillColor:"#141414",fillOpacity:.85}).addTo(lay);
+      mk.on("click",function(){ pop(); });
       if(isM){ mk.bringToFront(); }
-      return {open:function(){ m.setView([lat,lon],17); mk.openPopup(); }};
+      return {open:function(){ quiet(); m.setView([lat,lon],Math.max(m.getZoom(),16)); }};
     },
-    me:function(lat,lon,r,showMe){
+    me:function(lat,lon,r,showMe,fit){
       me.clearLayers();
-      L.circle([lat,lon],{radius:r,color:"#141414",weight:1,fillOpacity:.05}).addTo(me);
-      if(showMe){ L.circleMarker([lat,lon],{radius:8,color:"#fff",weight:3,fillColor:"#1a73e8",fillOpacity:1}).addTo(me).bindPopup("現在地"); }
-      m.fitBounds(L.latLng(lat,lon).toBounds(r*2));
+      if(showMe){ L.circleMarker([lat,lon],{radius:8,color:"#fff",weight:3,fillColor:"#1a73e8",fillOpacity:1}).addTo(me); }
+      if(fit){ quiet(); m.fitBounds(L.latLng(lat,lon).toBounds(r*2)); }
     },
-    view:function(){ var c=m.getCenter(); return {lat:c.lat,lon:c.lng,z:m.getZoom()}; },
+    view:function(){ var c=m.getCenter(), b=m.getBounds(); return {lat:c.lat,lon:c.lng,z:m.getZoom(),r:Math.min(m.distance(c,L.latLng(b.getNorth(),c.lng)),m.distance(c,L.latLng(c.lat,b.getEast())))}; },
+    onMove:function(cb){ m.on("moveend",function(){ if(!isQuiet()){ cb(); } }); },
+    resize:function(){ m.invalidateSize(); },
     destroy:function(){ m.remove(); freshMapDiv(); }
   };
 }
 var GSTYLE=[{stylers:[{saturation:-100}]},{featureType:"poi",stylers:[{visibility:"off"}]},{featureType:"transit",elementType:"labels.icon",stylers:[{visibility:"off"}]}];
 function googleMap(v){
   var g=google.maps;
-  var m=new g.Map(document.getElementById("map"),{center:{lat:v.lat,lng:v.lon},zoom:v.z,styles:GSTYLE,clickableIcons:false,mapTypeControl:false,streetViewControl:false,fullscreenControl:false,gestureHandling:"greedy"});
+  var m=new g.Map(document.getElementById("map"),{center:{lat:v.lat,lng:v.lon},zoom:v.z,styles:GSTYLE,clickableIcons:false,mapTypeControl:false,streetViewControl:false,fullscreenControl:false,gestureHandling:"greedy",zoomControl:false,keyboardShortcuts:false});
   var iw=new g.InfoWindow(), marks=[], meObjs=[];
   function dot(isM){ return {path:g.SymbolPath.CIRCLE,scale:isM?10:6,fillColor:isM?"#c8321e":"#141414",fillOpacity:isM?1:.85,strokeColor:"#fff",strokeWeight:isM?2:1}; }
   return {kind:"google",
@@ -367,18 +410,18 @@ function googleMap(v){
     shop:function(lat,lon,isM,pop){
       var k=new g.Marker({position:{lat:lat,lng:lon},map:m,zIndex:isM?10:1,icon:dot(isM)});
       marks.push(k);
-      function open(){ iw.setContent(pop); iw.open({map:m,anchor:k}); }
-      k.addListener("click",open);
-      return {open:function(){ m.setCenter({lat:lat,lng:lon}); m.setZoom(17); open(); }};
+      k.addListener("click",function(){ pop(); });
+      return {open:function(){ quiet(); m.panTo({lat:lat,lng:lon}); if(m.getZoom()<16){ m.setZoom(16); } }};
     },
-    me:function(lat,lon,r,showMe){
+    me:function(lat,lon,r,showMe,fit){
       meObjs.forEach(function(o){ o.setMap(null); }); meObjs=[];
-      var c=new g.Circle({map:m,center:{lat:lat,lng:lon},radius:r,strokeColor:"#141414",strokeWeight:1,fillColor:"#141414",fillOpacity:.05,clickable:false});
-      meObjs.push(c);
+      var c=new g.Circle({map:null,center:{lat:lat,lng:lon},radius:r});
       if(showMe){ meObjs.push(new g.Marker({map:m,position:{lat:lat,lng:lon},zIndex:20,title:"現在地",icon:{path:g.SymbolPath.CIRCLE,scale:8,fillColor:"#1a73e8",fillOpacity:1,strokeColor:"#fff",strokeWeight:3}})); }
-      m.fitBounds(c.getBounds());
+      if(fit){ quiet(); m.fitBounds(c.getBounds(),0); }
     },
-    view:function(){ var c=m.getCenter(); return {lat:c.lat(),lon:c.lng(),z:m.getZoom()}; },
+    view:function(){ var c=m.getCenter(), b=m.getBounds(), z=m.getZoom(); var r=1000; if(b){ var ne=b.getNorthEast(); r=Math.min(dist(c.lat(),c.lng(),ne.lat(),c.lng()),dist(c.lat(),c.lng(),c.lat(),ne.lng())); } return {lat:c.lat(),lon:c.lng(),z:z,r:r}; },
+    onMove:function(cb){ m.addListener("idle",function(){ if(!isQuiet()){ cb(); } }); },
+    resize:function(){},
     destroy:function(){ freshMapDiv(); }
   };
 }
@@ -396,7 +439,7 @@ function hit(x){
   return kw.split(/[\s\u3000、,]+/).filter(Boolean).every(function(k){ return words(k).some(function(w){ return t.indexOf(w)>=0; }); });
 }
 var statusEl=document.getElementById("status"), listEl=document.getElementById("list");
-function setBusy(b){ busy=b; document.getElementById("here").disabled=b; document.getElementById("center").disabled=b; document.getElementById("go").disabled=b; }
+function setBusy(b){ busy=b; document.getElementById("here").disabled=b; document.getElementById("go").disabled=b; document.getElementById("area").disabled=b; }
 
 function buildQuery(lat,lon,r){
   var keys=[];
@@ -424,12 +467,13 @@ function seedResults(lat,lon,r){
   out.sort(function(a,b){ return a.d-b.d; });
   return out;
 }
-function search(lat,lon,showMe){
+function search(lat,lon,showMe,r,fit){
   if(busy){ return; }
-  var r=Number(document.getElementById("rad").value);
+  r=Math.round(Math.min(Math.max(r||1000,300),5000));
+  document.getElementById("area").hidden=true; closeDetail();
   setBusy(true); hasOrigin=true; searchToken={};
   last={lat:lat,lon:lon,showMe:showMe}; lastR=r;
-  M.me(lat,lon,r,showMe);
+  M.me(lat,lon,r,showMe,fit!==false);
   results=seedResults(lat,lon,r);
   if(document.getElementById("only").checked){ setBusy(false); render("ok"); return; }
   render("loading");
@@ -488,56 +532,50 @@ function render(state){
     if(isM){ menbu++; }
     shown++;
     var note=isM?MENBU[x.mi][1]:"";
-    var pop=el("div","pop"); pop.appendChild(el("b",null,x.name));
-    pop.appendChild(el("div",null,(isM?"麺部の投稿あり　":"")+x.kind+(hasOrigin?"　"+fmt(x.d):"")));
-    if(note){ pop.appendChild(el("div",null,note)); }
-    var gq="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(x.name+" "+((isM&&AREA_TXT[x.mi])||"北海道"));
-    if(M.kind==="google"){
-      var pb=el("button","gbtn","口コミ・写真を見る"); pb.type="button";
-      pb.addEventListener("click",function(){ showDetail(x,gq); }); pop.appendChild(pb);
-    }else{
-      var pg=el("a","gbtn","口コミ・写真を見る（Googleマップ）"); pg.href=gq; pg.target="_blank"; pg.rel="noopener"; pop.appendChild(pg);
-    }
-    var mk=M.shop(x.lat,x.lon,isM,pop);
+    var mk=M.shop(x.lat,x.lon,isM,function(){ selectShop(x,false); });
+    x.mk=mk;
     var li=el("li",isM?"menbu":"");
+    li.tabIndex=0; li.setAttribute("role","button");
     var top=el("div","top2"); top.appendChild(el("p","name",x.name)); top.appendChild(el("span","dist",hasOrigin?fmt(x.d):"")); li.appendChild(top);
     var meta=el("div","meta");
     if(isM){ meta.appendChild(el("span","tag m","麺部の投稿あり")); } else { meta.appendChild(el("span","tag n","未開拓")); }
     meta.appendChild(el("span","tag",x.kind)); li.appendChild(meta);
     if(note){ li.appendChild(el("p","note",note)); }
-    var acts=el("div","acts");
-    var b=el("button",null,"地図で見る"); b.type="button";
-    b.addEventListener("click",function(){ mk.open(); document.getElementById("map").scrollIntoView({block:"start"}); });
-    acts.appendChild(b);
-    if(M.kind==="google"){
-      var g=el("button",null,"口コミ・写真"); g.type="button"; g.addEventListener("click",function(){ showDetail(x,gq); });
-    }else{
-      var g=el("a",null,"口コミ・写真"); g.href=gq; g.target="_blank"; g.rel="noopener";
-    }
-    acts.appendChild(g);
-    var a=el("a",null,"経路を開く"); a.href="https://www.google.com/maps/dir/?api=1&destination="+x.lat+","+x.lon; a.target="_blank"; a.rel="noopener";
-    acts.appendChild(a); li.appendChild(acts); listEl.appendChild(li);
+    function pick(){ selectShop(x,true); }
+    li.addEventListener("click",pick);
+    li.addEventListener("keydown",function(e){ if(e.key==="Enter"){ pick(); } });
+    listEl.appendChild(li);
   });
-  var busyNote="ほかの麺の店は、データのサーバーが混雑していて取得できませんでした。少し待ってからもう一度押してください。";
-  if(state==="init"){ statusEl.textContent="朱色の印は麺部の店です（"+SEEDS.length+"軒）。「現在地から探す」を押すと近い順に並びます。"; return; }
+  var busyNote="ほかの麺の店は今は取れませんでした。少し待って「このエリアで探す」を押してください。";
+  if(state==="init"){ statusEl.textContent="麺部の店 "+shown+"軒。右下の◎で近い順に並びます"; return; }
   if(state==="loading"){ statusEl.textContent="麺部の店 "+menbu+"軒を表示。ほかの麺の店を探しています…"; return; }
   if(state==="partial"){ statusEl.textContent=shown+"軒を近い順に表示（うち麺部の店 "+menbu+"軒）。ほかの店をもう少し探しています…"; return; }
   if(state==="failed"){ statusEl.textContent=(menbu?"麺部の店 "+menbu+"軒を表示。":"条件に合う麺部の店はありません。")+busyNote; return; }
-  if(!shown){ statusEl.textContent="条件に合う店は見つかりませんでした。範囲を広げるか、条件をゆるめてください。"; return; }
-  statusEl.textContent=shown+"軒を近い順に表示（うち麺部の店 "+menbu+"軒）";
+  if(!shown){ statusEl.textContent="条件に合う店は見つかりませんでした。地図を広げて「このエリアで探す」か、絞り込みを外してください。"; return; }
+  statusEl.textContent="近くに"+shown+"軒（麺部の店 "+menbu+"軒）";
 }
 document.getElementById("here").addEventListener("click",function(){
-  if(!navigator.geolocation){ statusEl.textContent="この端末では現在地を取得できません。地図を動かして「地図の中心で探す」を使ってください。"; return; }
+  if(!navigator.geolocation){ statusEl.textContent="この端末では現在地を取得できません。地図を動かして「このエリアで探す」を押してください。"; return; }
   statusEl.textContent="現在地を確認しています…";
   navigator.geolocation.getCurrentPosition(function(p){
-    search(p.coords.latitude,p.coords.longitude,true);
+    search(p.coords.latitude,p.coords.longitude,true,1000,true);
   },function(){
-    statusEl.textContent="現在地を取得できませんでした。位置情報を許可するか、地図を動かして「地図の中心で探す」を使ってください。";
+    statusEl.textContent="現在地を取得できませんでした。位置情報を許可するか、地図を動かして「このエリアで探す」を押してください。";
   },{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
 });
-document.getElementById("center").addEventListener("click",function(){ var c=M.view(); search(c.lat,c.lon,false); });
+document.getElementById("area").addEventListener("click",function(){ var v=M.view(); search(v.lat,v.lon,false,v.r,false); });
 document.getElementById("only").addEventListener("change",function(){
-  if(last && !this.checked){ search(last.lat,last.lon,last.showMe); } else { render(hasOrigin?"ok":"init"); }
+  if(last && !this.checked){ search(last.lat,last.lon,last.showMe,lastR,false); } else { render(hasOrigin?"ok":"init"); }
+});
+// 絞り込みのボタン（もう一度押すと外れる）。言葉で絞るだけなので、通信はしない
+Array.prototype.forEach.call(document.querySelectorAll(".chip[data-kw]"),function(b){
+  b.addEventListener("click",function(){
+    var on=b.getAttribute("aria-pressed")!=="true";
+    Array.prototype.forEach.call(document.querySelectorAll(".chip[data-kw]"),function(o){ o.setAttribute("aria-pressed","false"); });
+    if(on){ b.setAttribute("aria-pressed","true"); }
+    kw=on?b.getAttribute("data-kw"):""; document.getElementById("q").value="";
+    closeDetail(); render(lastState==="init"?"init":"ok");
+  });
 });
 function geocode(q){
   var u="https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=jp&accept-language=ja&bounded=1&viewbox=139.3,45.6,145.9,41.3&q="+encodeURIComponent(q);
@@ -604,18 +642,26 @@ function geocode(q){
     }).catch(function(){ go.disabled=false; st.textContent="いまは答えられませんでした。通信の状態を確かめて、もう一度聞いてください。"; });
   });
 })();
+// 検索欄はひとつ。麺の言葉は絞り込みに、残りは場所として扱う。場所が見つからなければ全部を店名として探す
+var FOODWORD=new RegExp("^("+NOODLE_WORDS+"|つけ麺|つけめん|味噌|みそ|醤油|しょうゆ|塩|豚骨|とんこつ|担々麺|担担麺|坦々麺|家系|二郎|煮干し|中華そば|ちゃんぽん|冷麺|まぜそば|油そば)");
 document.getElementById("find").addEventListener("submit",function(ev){
   ev.preventDefault();
   if(busy){ return; }
-  kw=document.getElementById("kw").value.trim();
-  var place=document.getElementById("place").value.trim();
-  if(!place){
-    if(last){ search(last.lat,last.lon,last.showMe); } else { var c=M.view(); search(c.lat,c.lon,false); }
-    return;
-  }
-  statusEl.textContent="「"+place+"」の場所を調べています…";
-  geocode(place).then(function(g){ search(g.lat,g.lon,false); },function(){
-    statusEl.textContent="「"+place+"」の場所が見つかりませんでした。駅名や住所で入れ直してください。";
+  var qEl=document.getElementById("q"); qEl.blur();
+  var text=qEl.value.trim();
+  Array.prototype.forEach.call(document.querySelectorAll(".chip[data-kw]"),function(o){ o.setAttribute("aria-pressed","false"); });
+  var parts=text.split(/[\s\u3000、,]+/).filter(Boolean);
+  var foods=parts.filter(function(w){ return FOODWORD.test(w); }), places=parts.filter(function(w){ return !FOODWORD.test(w); });
+  var place=places.join(" ");
+  function here(){ var v=M.view(); search(v.lat,v.lon,false,v.r,false); }
+  if(!place){ kw=foods.join(" "); if(last){ search(last.lat,last.lon,last.showMe,lastR,false); } else { here(); } return; }
+  statusEl.textContent="「"+place+"」を探しています…"; setSheet("peek");
+  geocode(place).then(function(g){
+    if(!inHokkaido(g.lat,g.lon)&&!/[都道府県市区町村駅]/.test(place)){ throw new Error("far"); }
+    kw=foods.join(" "); search(g.lat,g.lon,false,1000,true);
+  }).catch(function(){
+    kw=text; render(lastState==="init"?"init":"ok");
+    if(!listEl.children.length){ statusEl.textContent="「"+text+"」は見つかりませんでした。駅名・地名・店名で入れ直してください。"; }
   });
 });
 // 麺部Tシャツの予約（受付前は coming soon、受付中はフォーム、締切後は非表示）
@@ -663,14 +709,41 @@ function attrLink(a){
   if(a.uri){ n.href=a.uri; n.target="_blank"; n.rel="noopener"; }
   return n;
 }
-function closeDetail(){ var box=document.getElementById("detail"); box.hidden=true; box.textContent=""; }
+var selected=null;
+function closeDetail(){ var box=document.getElementById("detail"); box.hidden=true; box.textContent=""; selected=null; listEl.hidden=false; }
+// 店を選ぶ：一覧の上にその店のカードを出す。Googleマップのときは評価・写真・口コミもカードの中に読み込む
+function selectShop(x,fromList){
+  var box=document.getElementById("detail"), isM=x.mi>=0;
+  selected=x; box.textContent=""; box.hidden=false; listEl.hidden=true;
+  var gq="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(x.name+" "+((isM&&AREA_TXT[x.mi])||"北海道"));
+  var head=el("div","dhead"); head.appendChild(el("h3","name",x.name));
+  var cl=el("button","xbtn","×"); cl.type="button"; cl.setAttribute("aria-label","閉じて一覧に戻る"); cl.addEventListener("click",function(){ closeDetail(); });
+  head.appendChild(cl); box.appendChild(head);
+  var meta=el("div","meta");
+  meta.appendChild(el("span","tag "+(isM?"m":"n"),isM?"麺部の投稿あり":"未開拓"));
+  meta.appendChild(el("span","tag",x.kind));
+  if(hasOrigin&&x.d!=null){ meta.appendChild(el("span","tag",fmt(x.d))); }
+  box.appendChild(meta);
+  if(isM&&MENBU[x.mi][1]){ box.appendChild(el("p","note","麺部のメモ："+MENBU[x.mi][1])); }
+  var acts=el("div","acts");
+  var a=el("a","primary","経路"); a.href="https://www.google.com/maps/dir/?api=1&destination="+x.lat+","+x.lon; a.target="_blank"; a.rel="noopener"; acts.appendChild(a);
+  if(M.kind!=="google"){ var g=el("a",null,"口コミ・写真（Googleマップ）"); g.href=gq; g.target="_blank"; g.rel="noopener"; acts.appendChild(g); }
+  var back=el("button",null,"一覧に戻る"); back.type="button"; back.addEventListener("click",function(){ closeDetail(); }); acts.appendChild(back);
+  box.appendChild(acts);
+  var dg=el("div","dg"); dg.id="dg"; box.appendChild(dg);
+  if(fromList&&x.mk){ x.mk.open(); }
+  document.getElementById("sbody").scrollTop=0;
+  setSheet(M.kind==="google"?"half":"peekcard");
+  if(M.kind==="google"){ showDetail(x,gq); }
+}
 function showDetail(x,gq){
-  var box=document.getElementById("detail");
-  box.hidden=false; box.textContent="";
-  box.appendChild(el("p",null,"「"+x.name+"」の口コミと写真を読み込んでいます…"));
-  box.scrollIntoView({behavior:"smooth",block:"start"});
+  var box=document.getElementById("dg");
+  if(!box){ return; }
+  box.textContent="";
+  box.appendChild(el("p","dwho","口コミと写真を読み込んでいます…"));
   function fail(msg){
-    box.textContent=""; box.appendChild(el("p",null,msg));
+    if(selected!==x){ return; }
+    box.textContent=""; box.appendChild(el("p","dwho",msg));
     var a=el("a",null,"Googleマップで探す"); a.href=gq; a.target="_blank"; a.rel="noopener"; box.appendChild(a);
   }
   var ck=x.name+"|"+x.lat.toFixed(4)+","+x.lon.toFixed(4);
@@ -684,10 +757,8 @@ function showDetail(x,gq){
   }).then(function(r){ var p=(r&&r.places&&r.places[0])||null; DCACHE[ck]=p||"none"; return DCACHE[ck]; });
   job.then(function(p){
     if(p==="none"||!p){ fail("Googleマップでこの店が見つかりませんでした。"); return; }
+    if(selected!==x||!document.getElementById("dg")){ return; }
     box.textContent="";
-    var head=el("div","dhead"); head.appendChild(el("h3",null,p.displayName||x.name));
-    var cl=el("button","dclose","閉じる"); cl.type="button"; cl.addEventListener("click",closeDetail); head.appendChild(cl);
-    box.appendChild(head);
     if(p.rating){ box.appendChild(el("p","drate","★ "+p.rating.toFixed(1)+"（"+(p.userRatingCount||0)+"件）")); }
     if(p.location){
       var dd=dist(x.lat,x.lon,p.location.lat(),p.location.lng());
@@ -724,7 +795,8 @@ function showDetail(x,gq){
   }).catch(function(){ delete DCACHE[ck]; fail("口コミと写真を表示できませんでした。今日の表示回数の上限に達したかもしれません。Googleマップで直接見られます。"); });
 }
 function redraw(){
-  if(last){ M.me(last.lat,last.lon,lastR,last.showMe); }
+  if(last){ M.me(last.lat,last.lon,lastR,last.showMe,true); }
+  M.onMove(showArea);
   render(lastState);
 }
 function useGoogle(key){
@@ -737,7 +809,7 @@ function useGoogle(key){
     redraw();
   };
   window.__gmReady=function(){
-    var v=M.view(); M.destroy(); M=googleMap(v);
+    quiet(); var v=M.view(); M.destroy(); M=googleMap(v); closeDetail();
     document.getElementById("mapattr").textContent="地図・口コミ・写真：Google。";
     redraw();
   };
@@ -757,48 +829,75 @@ fetch("https://uvdodybrxmllldazdtbu.supabase.co/functions/v1/menbu-ask?shops=1")
   if(!last&&!busy){ results=seedResults(43.0608,141.3545,1e9); render("init"); }
 }).catch(function(){});
 
-// 【MAP】【SHOP】のタブ。#shop で直接開ける
+// ===== 地図ファーストの操作 =====
+function showArea(){ if(!busy){ document.getElementById("area").hidden=false; } }
+M.onMove(showArea);
+// 下の一覧（引き出しシート）。つまみを引くか押すと、たたむ・半分・全部を切り替える
+var sheetEl=document.getElementById("sheet"), sheetState="peek";
+function sheetPx(st){
+  var H=window.innerHeight;
+  if(st==="peek"){ return 132; }
+  if(st==="peekcard"){ return Math.min(260,Math.round(H*0.42)); }
+  if(st==="half"){ return Math.round(H*0.55); }
+  return H-112;
+}
+function applySheet(px){ document.documentElement.style.setProperty("--sheet-h",px+"px"); }
+function setSheet(st){ sheetState=st; applySheet(sheetPx(st)); }
+setSheet("peek");
+window.addEventListener("resize",function(){ setSheet(sheetState); if(M.resize){ M.resize(); } });
 (function(){
-  var tm=document.getElementById("tab-map"), tsb=document.getElementById("tab-shop"), pm=document.getElementById("pane-map"), ps=document.getElementById("pane-shop");
-  function show(shop,push){
-    pm.hidden=shop; ps.hidden=!shop;
-    tm.setAttribute("aria-selected",String(!shop)); tsb.setAttribute("aria-selected",String(shop));
-    if(push){ history.replaceState(null,"",shop?"#shop":location.pathname+location.search); }
-    if(!shop){ setTimeout(function(){ window.dispatchEvent(new Event("resize")); if(window.LMAP&&LMAP.invalidateSize){ LMAP.invalidateSize(); } },50); }
-    window.scrollTo(0,0);
-  }
-  tm.addEventListener("click",function(){ show(false,true); });
-  tsb.addEventListener("click",function(){ show(true,true); });
-  if(location.hash==="#shop"){ show(true,false); }
-})();
-
-// 困ったら麺AI：右下のボタン（ドラッグで移動、位置は覚える）。押すとAIの窓が開く
-(function(){
-  var fab=document.getElementById("aifab"), pn=document.getElementById("aipanel"), KEY="menbu_aifab_pos";
-  function clamp(x,y){ var w=fab.offsetWidth, h=fab.offsetHeight; return [Math.min(Math.max(4,x),window.innerWidth-w-4),Math.min(Math.max(4,y),window.innerHeight-h-4)]; }
-  function place(x,y){ var c=clamp(x,y); fab.style.left=c[0]+"px"; fab.style.top=c[1]+"px"; fab.style.right="auto"; fab.style.bottom="auto"; return c; }
-  try{ var sv=JSON.parse(localStorage.getItem(KEY)||"null"); if(sv&&isFinite(sv[0])&&isFinite(sv[1])){ place(sv[0]*window.innerWidth,sv[1]*window.innerHeight); } }catch(e){}
-  window.addEventListener("resize",function(){ if(fab.style.left){ place(parseFloat(fab.style.left),parseFloat(fab.style.top)); } });
-  function open(){ pn.hidden=false; fab.hidden=true; fab.setAttribute("aria-expanded","true"); var q=document.getElementById("aiq"); if(q&&window.matchMedia("(pointer:fine)").matches){ q.focus(); } }
-  function close(){ pn.hidden=true; fab.hidden=false; fab.setAttribute("aria-expanded","false"); fab.focus(); }
-  var st=null;
-  fab.addEventListener("pointerdown",function(e){ var r=fab.getBoundingClientRect(); st={x:e.clientX,y:e.clientY,ox:e.clientX-r.left,oy:e.clientY-r.top,moved:false}; try{ fab.setPointerCapture(e.pointerId); }catch(_){} });
-  fab.addEventListener("pointermove",function(e){
-    if(!st){ return; }
-    if(!st.moved&&Math.abs(e.clientX-st.x)+Math.abs(e.clientY-st.y)<8){ return; }
-    st.moved=true; fab.classList.add("drag"); place(e.clientX-st.ox,e.clientY-st.oy);
+  var g=document.getElementById("grab"), d=null;
+  function next(){ setSheet(sheetState==="peek"||sheetState==="peekcard"?"half":(sheetState==="half"?"full":"peek")); }
+  g.addEventListener("pointerdown",function(e){ d={y:e.clientY,h:sheetEl.getBoundingClientRect().height,moved:false}; sheetEl.classList.add("dragging"); try{ g.setPointerCapture(e.pointerId); }catch(_){} });
+  g.addEventListener("pointermove",function(e){
+    if(!d){ return; }
+    var dy=e.clientY-d.y; if(Math.abs(dy)>6){ d.moved=true; }
+    if(d.moved){ applySheet(Math.min(Math.max(d.h-dy,100),window.innerHeight-90)); }
   });
   function end(){
-    if(!st){ return; }
-    var moved=st.moved; st=null; fab.classList.remove("drag");
-    if(moved){ try{ localStorage.setItem(KEY,JSON.stringify([parseFloat(fab.style.left)/window.innerWidth,parseFloat(fab.style.top)/window.innerHeight])); }catch(e){} }
-    else{ open(); }
+    if(!d){ return; }
+    sheetEl.classList.remove("dragging");
+    if(!d.moved){ d=null; next(); return; }
+    var h=sheetEl.getBoundingClientRect().height, best="peek", bd=1e9;
+    ["peek","half","full"].forEach(function(st){ var v=Math.abs(sheetPx(st)-h); if(v<bd){ bd=v; best=st; } });
+    d=null; setSheet(best);
   }
-  fab.addEventListener("pointerup",end);
-  fab.addEventListener("pointercancel",function(){ st=null; fab.classList.remove("drag"); });
-  fab.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); open(); } });
-  document.getElementById("aiclose").addEventListener("click",close);
-  document.addEventListener("keydown",function(e){ if(e.key==="Escape"&&!pn.hidden){ close(); } });
+  g.addEventListener("pointerup",end);
+  g.addEventListener("pointercancel",end);
+  g.addEventListener("keydown",function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); next(); } });
+  document.getElementById("status").addEventListener("click",function(){ if(sheetState==="peek"){ setSheet("half"); } });
+})();
+// SHOP・このマップについて・麺AIの窓（どれかひとつだけ開く）
+(function(){
+  var ids=["shoppanel","infopanel","aipanel"], aib=document.getElementById("aiopen");
+  function closeAll(){ ids.forEach(function(id){ document.getElementById(id).hidden=true; }); aib.setAttribute("aria-expanded","false"); if(location.hash==="#shop"){ history.replaceState(null,"",location.pathname+location.search); } }
+  function open(id){
+    closeAll(); var p=document.getElementById(id); p.hidden=false;
+    if(id==="shoppanel"){ history.replaceState(null,"","#shop"); }
+    if(id==="aipanel"){ aib.setAttribute("aria-expanded","true"); var q=document.getElementById("aiq"); if(q){ q.focus(); } }
+    else{ var x=p.querySelector(".xbtn"); if(x){ x.focus(); } }
+  }
+  document.getElementById("openshop").addEventListener("click",function(){ open("shoppanel"); });
+  document.getElementById("openinfo").addEventListener("click",function(){ open("infopanel"); });
+  aib.addEventListener("click",function(){ if(document.getElementById("aipanel").hidden){ open("aipanel"); } else { closeAll(); } });
+  document.getElementById("aiclose").addEventListener("click",closeAll);
+  Array.prototype.forEach.call(document.querySelectorAll("[data-close]"),function(b){ b.addEventListener("click",closeAll); });
+  document.addEventListener("keydown",function(e){ if(e.key==="Escape"){ closeAll(); } });
+  document.getElementById("map").addEventListener("pointerdown",function(){ ids.forEach(function(id){ if(id!=="aipanel"){ document.getElementById(id).hidden=true; } }); },true);
+  if(location.hash==="#shop"){ open("shoppanel"); }
+  window.__openPanel=open;
+})();
+// はじめて開いた人には一度だけ案内を出す。位置情報をすでに許可している人は、すぐ現在地から探す
+(function(){
+  var w=document.getElementById("welcome"), seen=false;
+  try{ seen=!!localStorage.getItem("menbu_seen"); }catch(e){ seen=true; }
+  function done(){ w.hidden=true; try{ localStorage.setItem("menbu_seen","1"); }catch(e){} }
+  document.getElementById("wgo").addEventListener("click",function(){ done(); document.getElementById("here").click(); });
+  document.getElementById("wskip").addEventListener("click",done);
+  if(!seen&&location.hash!=="#shop"){ w.hidden=false; document.getElementById("wgo").focus(); return; }
+  if(navigator.permissions&&navigator.permissions.query){
+    navigator.permissions.query({name:"geolocation"}).then(function(p){ if(p.state==="granted"&&!last){ document.getElementById("here").click(); } }).catch(function(){});
+  }
 })();
 </script>
 </body>
