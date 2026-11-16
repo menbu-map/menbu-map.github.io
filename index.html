@@ -76,6 +76,22 @@ li.menbu{border-left-color:var(--shu)}
 footer{font-size:12px;color:var(--sub);border-top:1px solid var(--line);padding-top:10px}
 footer p{margin:0 0 4px}
 .pop b{font-size:14px}
+.detail{border:2px solid var(--sumi);border-radius:4px;padding:12px;margin:10px 0;background:#fff}
+.detail .dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.detail h3{margin:0;font-size:18px}
+.detail .dclose{font:inherit;font-size:14px;border:1px solid var(--sumi);background:transparent;border-radius:4px;padding:4px 10px;cursor:pointer}
+.detail .drate{margin:4px 0 8px;font-weight:700}
+.detail .dwarn{margin:4px 0;color:#c8321e;font-size:13px}
+.detail .dphotos{display:flex;gap:6px;overflow-x:auto;margin:6px 0}
+.detail figure{margin:0;flex:0 0 auto}
+.detail img{height:150px;width:auto;border-radius:4px;display:block}
+.detail figcaption{font-size:11px;color:var(--sub);max-width:220px}
+.detail .drev{border-top:1px solid #ddd;padding:8px 0}
+.detail .drev p{margin:4px 0}
+.detail .dwho{font-size:13px;color:var(--sub)}
+.detail .dfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:13px}
+.detail .dfoot a{font-weight:700;color:var(--sumi)}
+.gmark{font-family:Roboto,Arial,sans-serif;font-size:12px;color:#5f6368}
 .pop .gbtn{display:inline-block;margin-top:6px;font-weight:700;color:#141414;border:1.5px solid #141414;border-radius:4px;padding:5px 8px;text-decoration:none}
 </style>
 </head>
@@ -105,6 +121,7 @@ footer p{margin:0 0 4px}
     <button type="submit" id="go">この条件で探す</button>
   </form>
   <div id="map" role="application" aria-label="地図"></div>
+  <section id="detail" class="detail" hidden aria-live="polite"></section>
   <div class="ctl">
     <button type="button" id="here">現在地から探す</button>
     <button type="button" id="center">地図の中心で探す</button>
@@ -121,7 +138,7 @@ footer p{margin:0 0 4px}
   <p id="status" aria-live="polite">朱色の印は麺部の店です。「現在地から探す」を押すと近い順に並びます。</p>
   <ul id="list"></ul>
   <footer>
-    <p>地図：国土地理院。麺部の店のうち位置を確認できた24軒は、いつでも朱色の印で表示します。</p>
+    <p><span id="mapattr">地図：国土地理院。</span>麺部の店のうち位置を確認できた24軒は、いつでも朱色の印で表示します。</p>
     <p>それ以外の店の位置はOpenStreetMapの登録データです。登録されていない店は表示されません。</p>
     <p>麺部AIは、質問に合う店を候補から選んで答えます。「巡礼の店だけ」にチェックすると、麺部の投稿がある店だけから答えます。「現在地から探す」を押したあとは、現在地からの距離も踏まえます。</p>
     <p>「未開拓」は、まだ麺部の投稿がない店です。キーワードは店名・ジャンル・麺部のメモに含まれる言葉で探します。評価や営業時間は出ません。</p>
@@ -265,11 +282,64 @@ function kind(tags,name){
 }
 function el(t,c,txt){ var n=document.createElement(t); if(c){n.className=c;} if(txt!=null){n.textContent=txt;} return n; }
 
-var map=L.map("map").setView([43.0608,141.3545],14);
-L.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png",{maxZoom:18,
-  attribution:'<a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a> | 店データ © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(map);
-var layer=L.layerGroup().addTo(map), meLayer=L.layerGroup().addTo(map);
-var results=[], busy=false, hasOrigin=false, last=null, kw="";
+// 地図は2種類。Googleの鍵があればGoogleマップ（口コミ・写真つき）、なければ国土地理院の地図で動く
+function freshMapDiv(){
+  var old=document.getElementById("map"), n=document.createElement("div");
+  n.id="map"; n.setAttribute("role","application"); n.setAttribute("aria-label","地図");
+  old.replaceWith(n);
+}
+function leafletMap(v){
+  var m=L.map("map").setView([v.lat,v.lon],v.z);
+  L.tileLayer("https://cyberjapandata.gsi.go.jp/xyz/pale/{z}/{x}/{y}.png",{maxZoom:18,
+    attribution:'<a href="https://maps.gsi.go.jp/development/ichiran.html">国土地理院</a> | 店データ © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'}).addTo(m);
+  var lay=L.layerGroup().addTo(m), me=L.layerGroup().addTo(m);
+  return {kind:"leaflet",
+    clear:function(){ lay.clearLayers(); },
+    shop:function(lat,lon,isM,pop){
+      var mk=L.circleMarker([lat,lon],isM
+        ?{radius:10,color:"#fff",weight:2,fillColor:"#c8321e",fillOpacity:1}
+        :{radius:6,color:"#fff",weight:1,fillColor:"#141414",fillOpacity:.85}).bindPopup(pop).addTo(lay);
+      if(isM){ mk.bringToFront(); }
+      return {open:function(){ m.setView([lat,lon],17); mk.openPopup(); }};
+    },
+    me:function(lat,lon,r,showMe){
+      me.clearLayers();
+      L.circle([lat,lon],{radius:r,color:"#141414",weight:1,fillOpacity:.05}).addTo(me);
+      if(showMe){ L.circleMarker([lat,lon],{radius:8,color:"#fff",weight:3,fillColor:"#1a73e8",fillOpacity:1}).addTo(me).bindPopup("現在地"); }
+      m.fitBounds(L.latLng(lat,lon).toBounds(r*2));
+    },
+    view:function(){ var c=m.getCenter(); return {lat:c.lat,lon:c.lng,z:m.getZoom()}; },
+    destroy:function(){ m.remove(); freshMapDiv(); }
+  };
+}
+var GSTYLE=[{stylers:[{saturation:-100}]},{featureType:"poi",stylers:[{visibility:"off"}]},{featureType:"transit",elementType:"labels.icon",stylers:[{visibility:"off"}]}];
+function googleMap(v){
+  var g=google.maps;
+  var m=new g.Map(document.getElementById("map"),{center:{lat:v.lat,lng:v.lon},zoom:v.z,styles:GSTYLE,clickableIcons:false,mapTypeControl:false,streetViewControl:false,fullscreenControl:false,gestureHandling:"greedy"});
+  var iw=new g.InfoWindow(), marks=[], meObjs=[];
+  function dot(isM){ return {path:g.SymbolPath.CIRCLE,scale:isM?10:6,fillColor:isM?"#c8321e":"#141414",fillOpacity:isM?1:.85,strokeColor:"#fff",strokeWeight:isM?2:1}; }
+  return {kind:"google",
+    clear:function(){ marks.forEach(function(k){ k.setMap(null); }); marks=[]; iw.close(); },
+    shop:function(lat,lon,isM,pop){
+      var k=new g.Marker({position:{lat:lat,lng:lon},map:m,zIndex:isM?10:1,icon:dot(isM)});
+      marks.push(k);
+      function open(){ iw.setContent(pop); iw.open({map:m,anchor:k}); }
+      k.addListener("click",open);
+      return {open:function(){ m.setCenter({lat:lat,lng:lon}); m.setZoom(17); open(); }};
+    },
+    me:function(lat,lon,r,showMe){
+      meObjs.forEach(function(o){ o.setMap(null); }); meObjs=[];
+      var c=new g.Circle({map:m,center:{lat:lat,lng:lon},radius:r,strokeColor:"#141414",strokeWeight:1,fillColor:"#141414",fillOpacity:.05,clickable:false});
+      meObjs.push(c);
+      if(showMe){ meObjs.push(new g.Marker({map:m,position:{lat:lat,lng:lon},zIndex:20,title:"現在地",icon:{path:g.SymbolPath.CIRCLE,scale:8,fillColor:"#1a73e8",fillOpacity:1,strokeColor:"#fff",strokeWeight:3}})); }
+      m.fitBounds(c.getBounds());
+    },
+    view:function(){ var c=m.getCenter(); return {lat:c.lat(),lon:c.lng(),z:m.getZoom()}; },
+    destroy:function(){ freshMapDiv(); }
+  };
+}
+var M=leafletMap({lat:43.0608,lon:141.3545,z:14});
+var results=[], busy=false, hasOrigin=false, last=null, lastR=1000, lastState="init", kw="";
 var SYN = [["つけ麺","つけめん","tsukemen"],["ラーメン","らーめん","らぁ麺","拉麺","ramen"],["そば","蕎麦","soba"],["うどん","udon"],["担々麺","担担麺","坦々麺","担々","担担","坦々","タンタン","dandan"],["味噌","みそ"],["醤油","正油","しょうゆ"],["ちゃんぽん","チャンポン","champon"],["油そば","まぜそば"],["鶏白湯","鳥白湯","パイタン"]];
 function words(k){
   var n=norm(k), out=[n], i, j;
@@ -314,12 +384,9 @@ function search(lat,lon,showMe){
   if(busy){ return; }
   var r=Number(document.getElementById("rad").value);
   setBusy(true); hasOrigin=true;
-  meLayer.clearLayers();
-  L.circle([lat,lon],{radius:r,color:"#141414",weight:1,fillOpacity:.05}).addTo(meLayer);
-  if(showMe){ L.circleMarker([lat,lon],{radius:8,color:"#fff",weight:3,fillColor:"#1a73e8",fillOpacity:1}).addTo(meLayer).bindPopup("現在地"); }
-  last={lat:lat,lon:lon,showMe:showMe};
+  last={lat:lat,lon:lon,showMe:showMe}; lastR=r;
+  M.me(lat,lon,r,showMe);
   results=seedResults(lat,lon,r);
-  map.fitBounds(L.latLng(lat,lon).toBounds(r*2));
   if(document.getElementById("only").checked){ setBusy(false); render("ok"); return; }
   render("loading");
   callOverpass(buildQuery(lat,lon,r),0).then(function(data){
@@ -347,7 +414,8 @@ function search(lat,lon,showMe){
 }
 function render(state){
   var only=document.getElementById("only").checked;
-  layer.clearLayers(); listEl.textContent="";
+  lastState=state;
+  M.clear(); listEl.textContent="";
   var shown=0, menbu=0;
   results.forEach(function(x){
     var isM=x.mi>=0;
@@ -360,11 +428,13 @@ function render(state){
     pop.appendChild(el("div",null,(isM?"麺部の投稿あり　":"")+x.kind+(hasOrigin?"　"+fmt(x.d):"")));
     if(note){ pop.appendChild(el("div",null,note)); }
     var gq="https://www.google.com/maps/search/?api=1&query="+encodeURIComponent(x.name+" "+((isM&&AREA_TXT[x.mi])||"北海道"));
-    var pg=el("a","gbtn","口コミ・写真を見る（Googleマップ）"); pg.href=gq; pg.target="_blank"; pg.rel="noopener"; pop.appendChild(pg);
-    var mk=L.circleMarker([x.lat,x.lon],isM
-      ?{radius:10,color:"#fff",weight:2,fillColor:"#c8321e",fillOpacity:1}
-      :{radius:6,color:"#fff",weight:1,fillColor:"#141414",fillOpacity:.85}).bindPopup(pop).addTo(layer);
-    if(isM){ mk.bringToFront(); }
+    if(M.kind==="google"){
+      var pb=el("button","gbtn","口コミ・写真を見る"); pb.type="button";
+      pb.addEventListener("click",function(){ showDetail(x,gq); }); pop.appendChild(pb);
+    }else{
+      var pg=el("a","gbtn","口コミ・写真を見る（Googleマップ）"); pg.href=gq; pg.target="_blank"; pg.rel="noopener"; pop.appendChild(pg);
+    }
+    var mk=M.shop(x.lat,x.lon,isM,pop);
     var li=el("li",isM?"menbu":"");
     var top=el("div","top2"); top.appendChild(el("p","name",x.name)); top.appendChild(el("span","dist",hasOrigin?fmt(x.d):"")); li.appendChild(top);
     var meta=el("div","meta");
@@ -373,9 +443,14 @@ function render(state){
     if(note){ li.appendChild(el("p","note",note)); }
     var acts=el("div","acts");
     var b=el("button",null,"地図で見る"); b.type="button";
-    b.addEventListener("click",function(){ map.setView([x.lat,x.lon],17); mk.openPopup(); document.getElementById("map").scrollIntoView({block:"start"}); });
+    b.addEventListener("click",function(){ mk.open(); document.getElementById("map").scrollIntoView({block:"start"}); });
     acts.appendChild(b);
-    var g=el("a",null,"口コミ・写真"); g.href=gq; g.target="_blank"; g.rel="noopener"; acts.appendChild(g);
+    if(M.kind==="google"){
+      var g=el("button",null,"口コミ・写真"); g.type="button"; g.addEventListener("click",function(){ showDetail(x,gq); });
+    }else{
+      var g=el("a",null,"口コミ・写真"); g.href=gq; g.target="_blank"; g.rel="noopener";
+    }
+    acts.appendChild(g);
     var a=el("a",null,"経路を開く"); a.href="https://www.google.com/maps/dir/?api=1&destination="+x.lat+","+x.lon; a.target="_blank"; a.rel="noopener";
     acts.appendChild(a); li.appendChild(acts); listEl.appendChild(li);
   });
@@ -395,7 +470,7 @@ document.getElementById("here").addEventListener("click",function(){
     statusEl.textContent="現在地を取得できませんでした。位置情報を許可するか、地図を動かして「地図の中心で探す」を使ってください。";
   },{enableHighAccuracy:true,timeout:15000,maximumAge:60000});
 });
-document.getElementById("center").addEventListener("click",function(){ var c=map.getCenter(); search(c.lat,c.lng,false); });
+document.getElementById("center").addEventListener("click",function(){ var c=M.view(); search(c.lat,c.lon,false); });
 document.getElementById("only").addEventListener("change",function(){
   if(last && !this.checked){ search(last.lat,last.lon,last.showMe); } else { render(hasOrigin?"ok":"init"); }
 });
@@ -470,7 +545,7 @@ document.getElementById("find").addEventListener("submit",function(ev){
   kw=document.getElementById("kw").value.trim();
   var place=document.getElementById("place").value.trim();
   if(!place){
-    if(last){ search(last.lat,last.lon,last.showMe); } else { var c=map.getCenter(); search(c.lat,c.lng,false); }
+    if(last){ search(last.lat,last.lon,last.showMe); } else { var c=M.view(); search(c.lat,c.lon,false); }
     return;
   }
   statusEl.textContent="「"+place+"」の場所を調べています…";
@@ -478,11 +553,101 @@ document.getElementById("find").addEventListener("submit",function(ev){
     statusEl.textContent="「"+place+"」の場所が見つかりませんでした。駅名や住所で入れ直してください。";
   });
 });
+var DCACHE={};
+function attrLink(a){
+  if(!a){ return null; }
+  var n=a.uri?el("a",null,a.displayName||"投稿者"):el("span",null,a.displayName||"投稿者");
+  if(a.uri){ n.href=a.uri; n.target="_blank"; n.rel="noopener"; }
+  return n;
+}
+function closeDetail(){ var box=document.getElementById("detail"); box.hidden=true; box.textContent=""; }
+function showDetail(x,gq){
+  var box=document.getElementById("detail");
+  box.hidden=false; box.textContent="";
+  box.appendChild(el("p",null,"「"+x.name+"」の口コミと写真を読み込んでいます…"));
+  box.scrollIntoView({behavior:"smooth",block:"start"});
+  function fail(msg){
+    box.textContent=""; box.appendChild(el("p",null,msg));
+    var a=el("a",null,"Googleマップで探す"); a.href=gq; a.target="_blank"; a.rel="noopener"; box.appendChild(a);
+  }
+  var ck=x.name+"|"+x.lat.toFixed(4)+","+x.lon.toFixed(4);
+  var job=DCACHE[ck]?Promise.resolve(DCACHE[ck]):google.maps.importLibrary("places").then(function(lib){
+    return lib.Place.searchByText({
+      textQuery:x.name+((x.mi>=0&&AREA_TXT[x.mi])?" "+AREA_TXT[x.mi]:""),
+      fields:["displayName","formattedAddress","location","rating","userRatingCount","reviews","photos","googleMapsURI"],
+      locationBias:{center:{lat:x.lat,lng:x.lon},radius:500},
+      maxResultCount:1, language:"ja", region:"jp"
+    });
+  }).then(function(r){ var p=(r&&r.places&&r.places[0])||null; DCACHE[ck]=p||"none"; return DCACHE[ck]; });
+  job.then(function(p){
+    if(p==="none"||!p){ fail("Googleマップでこの店が見つかりませんでした。"); return; }
+    box.textContent="";
+    var head=el("div","dhead"); head.appendChild(el("h3",null,p.displayName||x.name));
+    var cl=el("button","dclose","閉じる"); cl.type="button"; cl.addEventListener("click",closeDetail); head.appendChild(cl);
+    box.appendChild(head);
+    if(p.rating){ box.appendChild(el("p","drate","★ "+p.rating.toFixed(1)+"（"+(p.userRatingCount||0)+"件）")); }
+    if(p.location){
+      var dd=dist(x.lat,x.lon,p.location.lat(),p.location.lng());
+      if(dd>800){ box.appendChild(el("p","dwarn","地図の印から"+fmt(dd)+"離れた店が見つかりました。別の店の情報かもしれません。")); }
+    }
+    if(p.formattedAddress){ box.appendChild(el("p","dwho",p.formattedAddress)); }
+    var ph=(p.photos||[]).slice(0,3);
+    if(ph.length){
+      var row=el("div","dphotos");
+      ph.forEach(function(f){
+        var fig=el("figure"), im=el("img"); im.loading="lazy"; im.alt=(p.displayName||x.name)+"の写真";
+        im.src=f.getURI({maxWidth:480,maxHeight:360}); fig.appendChild(im);
+        var cap=el("figcaption",null,"写真：");
+        (f.authorAttributions||[]).forEach(function(a,i){ if(i){ cap.appendChild(document.createTextNode("、")); } var n=attrLink(a); if(n){ cap.appendChild(n); } });
+        fig.appendChild(cap); row.appendChild(fig);
+      });
+      box.appendChild(row);
+    }
+    var rv=(p.reviews||[]).slice(0,3);
+    if(!rv.length){ box.appendChild(el("p","dwho","口コミはまだありません。")); }
+    rv.forEach(function(r){
+      var d=el("div","drev"), who=el("p","dwho");
+      var n=attrLink(r.authorAttribution); if(n){ who.appendChild(n); }
+      who.appendChild(document.createTextNode("　"+(r.rating?"★"+r.rating+"　":"")+(r.relativePublishTimeDescription||"")));
+      d.appendChild(who);
+      var t=String(r.text||""); if(t.length>220){ t=t.slice(0,220)+"…"; }
+      if(t){ d.appendChild(el("p",null,t)); }
+      box.appendChild(d);
+    });
+    var foot=el("div","dfoot");
+    var a=el("a",null,"Googleマップで全部見る"); a.href=p.googleMapsURI||gq; a.target="_blank"; a.rel="noopener"; foot.appendChild(a);
+    foot.appendChild(el("span","gmark","Google Maps"));
+    box.appendChild(foot);
+  }).catch(function(){ delete DCACHE[ck]; fail("口コミと写真を読み込めませんでした。"); });
+}
+function redraw(){
+  if(last){ M.me(last.lat,last.lon,lastR,last.showMe); }
+  render(lastState);
+}
+function useGoogle(key){
+  if(!key||window.__gmTried){ return; }
+  window.__gmTried=true;
+  window.gm_authFailure=function(){
+    if(M.kind!=="google"){ return; }
+    var v=M.view(); M.destroy(); M=leafletMap(v); closeDetail();
+    document.getElementById("mapattr").textContent="地図：国土地理院。";
+    redraw();
+  };
+  window.__gmReady=function(){
+    var v=M.view(); M.destroy(); M=googleMap(v);
+    document.getElementById("mapattr").textContent="地図・口コミ・写真：Google。";
+    redraw();
+  };
+  var s=document.createElement("script");
+  s.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(key)+"&v=weekly&language=ja&region=JP&loading=async&callback=__gmReady";
+  s.async=true; document.head.appendChild(s);
+}
 results=seedResults(43.0608,141.3545,1e9);
 render("init");
 // 店の一覧は受け口から最新を読む。読めないときは上に書いてある一覧のまま動く
 fetch("https://uvdodybrxmllldazdtbu.supabase.co/functions/v1/menbu-ask?shops=1").then(function(r){ return r.json(); }).then(function(j){
   if(!j||!Array.isArray(j.shops)||j.shops.length<MENBU.length||!Array.isArray(j.seeds)){ return; }
+  if(j.gmaps){ useGoogle(j.gmaps); }
   MENBU=j.shops; SEEDS=j.seeds; if(j.area){ AREA_TXT=j.area; }
   SEEDSET={}; SEEDS.forEach(function(s){ SEEDSET[s[0]]=s; });
   KEYS=MENBU.map(function(m){ return m[2].map(norm); });

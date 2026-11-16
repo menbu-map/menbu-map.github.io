@@ -48,6 +48,7 @@ var SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 var ANTHROPIC_KEY = Deno.env.get("ANTHROPIC_API_KEY") ?? "";
 var OPENAI_KEY = Deno.env.get("OPENAI_API_KEY") ?? "";
 var DAILY_CAP = 600;
+// GOOGLE_MAPS_BROWSER_KEY はブラウザ用の鍵（menbu-map.github.io からだけ使えるように制限して登録する）。ページに渡す前提の公開用の鍵で、ほかの鍵とは分ける
 var ORIGIN_RE = /^https:\/\/menbu-map\.github\.io$/i;
 
 function cors(origin){
@@ -148,7 +149,7 @@ Deno.serve(async function(req){
   var hasLlm=!!(ANTHROPIC_KEY||OPENAI_KEY);
   try{ await loadShops(); }catch(e){}
   if(req.method==="GET"){
-    if(new URL(req.url).searchParams.get("shops")){ return reply(origin,200,{shops:MENBU,seeds:SEEDS,area:AREA}); }
+    if(new URL(req.url).searchParams.get("shops")){ return reply(origin,200,{shops:MENBU,seeds:SEEDS,area:AREA,gmaps:Deno.env.get("GOOGLE_MAPS_BROWSER_KEY")||""}); }
     var hk=""; try{ hk=await hotpepperKey(); }catch(e){}
     return reply(origin,200,{ok:true,llm:ANTHROPIC_KEY?"anthropic":(OPENAI_KEY?"openai":"none"),hotpepper:!!hk});
   }
