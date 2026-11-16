@@ -75,14 +75,18 @@ async function hotpepperKey(){
   if(!r.ok){ return ""; }
   var j=await r.json(); return (j&&j.api_key)||"";
 }
-async function underCap(){
-  var day=new Date(Date.now()+9*3600*1000).toISOString().slice(0,10);
-  var r=await rest("menbu_ai_usage?day=eq."+day+"&select=count");
-  var rows=r.ok?await r.json():[];
-  var n=(rows[0]&&rows[0].count)||0;
-  if(n>=DAILY_CAP){ return false; }
-  await rest("menbu_ai_usage",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify({day:day,count:n+1})});
-  return true;
+// 回数の制限：同じ相手は1日80回（約40問）、全体は1日600回まで。相手の識別は接続元を伏せ字にしたもの
+var IP_CAP = 80;
+async function clientKey(req){
+  var ip=req.headers.get("cf-connecting-ip")||req.headers.get("x-real-ip")||String(req.headers.get("x-forwarded-for")||"").split(",").pop().trim()||"unknown";
+  var buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(ip+"|"+SERVICE_KEY.slice(-16)));
+  return Array.from(new Uint8Array(buf)).slice(0,12).map(function(b){ return b.toString(16).padStart(2,"0"); }).join("");
+}
+async function underCap(req){
+  var r=await rest("rpc/menbu_ai_hit",{method:"POST",body:JSON.stringify({p_ip:await clientKey(req),p_ip_cap:IP_CAP,p_day_cap:DAILY_CAP})});
+  if(!r.ok){ throw new Error("limit "+r.status); }
+  var v=await r.json();
+  return v==="ok";
 }
 async function llm(system,user,maxTokens){
   if(ANTHROPIC_KEY){
@@ -159,7 +163,7 @@ Deno.serve(async function(req){
   var here=(lat>20&&lat<50&&lon>120&&lon<150);
   if(!here){ lat=null; lon=null; }
   try{
-    if(!(await underCap())){ return reply(origin,429,{error:"cap"}); }
+    if(!(await underCap(req))){ return reply(origin,429,{error:"cap"}); }
     var place="", food="", haveParsed=(typeof body.place==="string"&&typeof body.food==="string");
     if(haveParsed){ place=body.place.slice(0,40); food=body.food.slice(0,40); }
     else{
@@ -194,6 +198,7 @@ Deno.serve(async function(req){
     });
     return reply(origin,200,{lead:String(a.lead||"").slice(0,200),items:items,source:only?"menbu":"hotpepper",place:usedPlace,food:food});
   }catch(e){
-    return reply(origin,502,{error:"upstream",detail:String((e&&e.message)||e).slice(0,60)});
+    console.error("menbu-ask",String((e&&e.message)||e));
+    return reply(origin,502,{error:"upstream"});
   }
 });

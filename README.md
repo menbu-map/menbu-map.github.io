@@ -11,6 +11,7 @@
 | 店データ | Supabase の表 `menbu_shops` | 行を足すとページとAIに反映される |
 | 取り込み記録 | Supabase の表 `menbu_imports` | 取り込み済みのLINE書き出しの記録 |
 | AI利用回数 | Supabase の表 `menbu_ai_usage` | 1日の上限（600回＝約300問）の管理 |
+| 相手ごとの回数 | Supabase の表 `menbu_ai_ip`（関数 `menbu_ai_hit`） | 同じ相手は1日80回（約40問）まで。接続元は伏せ字で記録し8日で消える |
 | 旧URL | `startright3/menbu-map` | 新URLへの転送だけ |
 
 ## 更新のしかた
@@ -29,5 +30,5 @@
 
 1. https://menbu-map.github.io/ が開くか（GitHub Pages）
 2. `https://uvdodybrxmllldazdtbu.supabase.co/functions/v1/menbu-ask` を開いて `{"ok":true,"llm":"...","hotpepper":true}` が返るか
-3. AIだけ答えない: 1日の上限に達していないか（`menbu_ai_usage`）、AIの鍵の残高
+3. AIだけ答えない: 1日の上限に達していないか（`menbu_ai_usage`・`menbu_ai_ip`）、AIの鍵の残高
 4. 「未開拓」の店が地図に出ない: 外部の無料サーバー（Overpass）の混雑。時間をおく
