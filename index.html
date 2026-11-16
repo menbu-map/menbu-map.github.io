@@ -2,12 +2,13 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
+<meta name="referrer" content="strict-origin-when-cross-origin">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>麺部マップ 近くの麺</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%20100%20100%22%3E%3Cdefs%3E%3CclipPath%20id%3D%22cc%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2233%22/%3E%3C/clipPath%3E%3C/defs%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2244%22%20fill%3D%22none%22%20stroke%3D%22%23141414%22%20stroke-width%3D%229%22/%3E%3Cg%20clip-path%3D%22url%28%23cc%29%22%3E%3Crect%20width%3D%22100%22%20height%3D%22100%22%20fill%3D%22%23141414%22/%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%23fff%22%20stroke-width%3D%224.5%22%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M8%2037%20q10.5%20-9%2021%200%20t21%200%20t21%200%20t21%200%22/%3E%3Cpath%20d%3D%22M8%2051%20q10.5%20-9%2021%200%20t21%200%20t21%200%20t21%200%22/%3E%3Cpath%20d%3D%22M8%2065%20q10.5%20-9%2021%200%20t21%200%20t21%200%20t21%200%22/%3E%3C/g%3E%3Cg%20stroke-linecap%3D%22round%22%3E%3Cpath%20d%3D%22M66%2010%20L45%2092%22%20stroke%3D%22%23141414%22%20stroke-width%3D%228%22/%3E%3Cpath%20d%3D%22M76%2013%20L55%2095%22%20stroke%3D%22%23141414%22%20stroke-width%3D%228%22/%3E%3Cpath%20d%3D%22M66%2010%20L45%2092%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223.2%22/%3E%3Cpath%20d%3D%22M76%2013%20L55%2095%22%20stroke%3D%22%23fff%22%20stroke-width%3D%223.2%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Yuji+Boku&family=Zen+Kaku+Gothic+New:wght@400;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <style>
 /* 墨と白の家紋調。朱は麺部の店の印だけに使う。 */
 :root{--bg:#f6f5f1;--card:#fff;--ink:#141414;--sub:#5c5c5c;--line:#d9d7d0;--sumi:#141414;--shu:#c8321e;--chip:#ecebe6;color-scheme:light;
@@ -126,7 +127,7 @@ footer p{margin:0 0 4px}
     <p>麺部の店かどうかは店名の一致で判定しています。同じ名前の別の店に朱色の印がつくことがあります。</p>
   </footer>
 </div>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script>
 // [表示名, メモ, 照合キー, 完全一致で照合するか(1/0), 地域 h=北海道 o=道外]
 var MENBU = [
@@ -434,7 +435,7 @@ function geocode(q){
       if(it.menbu&&it.note){ c.appendChild(el("p",null,"麺部のメモ："+it.note)); }
       if(it.address){ c.appendChild(el("p",null,it.address)); }
       if(it.hours){ c.appendChild(el("p",null,"営業："+it.hours)); }
-      if(it.uri){ var a=el("a",null,it.uri.indexOf("google.com/maps")>=0?"Googleマップで開く":"ホットペッパーで見る"); a.href=it.uri; a.target="_blank"; a.rel="noopener"; c.appendChild(a); }
+      if(it.uri&&/^https:\/\//.test(it.uri)){ var a=el("a",null,it.uri.indexOf("google.com/maps")>=0?"Googleマップで開く":"ホットペッパーで見る"); a.href=it.uri; a.target="_blank"; a.rel="noopener"; c.appendChild(a); }
       out.appendChild(c);
     });
     document.getElementById("gattr").hidden=(j.source!=="hotpepper"||!(j.items||[]).length);
