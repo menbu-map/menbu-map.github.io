@@ -18,6 +18,7 @@
 | 取り込み記録 | Supabase の表 `menbu_imports` | 取り込み済みのLINE書き出しの記録 |
 | AI利用回数 | 表 `menbu_ai_usage`・`menbu_ai_ip`（関数 `menbu_ai_hit`） | 全体1日600回、同じ相手は1日80回まで。接続元は伏せ字で記録し8日で消える |
 | Googleマップの回数 | 表 `menbu_gmaps_usage`（関数 `menbu_gmaps_hit`） | 地図の読み込みは1日300回まで。超えた日は国土地理院の地図で動く |
+| Googleの店検索の回数 | 表 `menbu_gplaces_usage`（関数 `menbu_gplaces_hit`） | 近くの麺の店のGoogle検索（Nearby Search Pro）は1日150回まで。超えた日はホットペッパーと地図データだけで出す |
 | Tシャツ予約 | 表 `menbu_tshirt_config`（設定1行）・`menbu_tshirt_orders`（予約） | 受付の開閉・価格・締切・サイズ・色と、予約の記録 |
 | 旧URL | `startright3/menbu-map` | 新URLへの転送だけ |
 
@@ -25,12 +26,13 @@
 
 - `?shops=1` 店一覧（とGoogleマップ用のブラウザ鍵）
 - `?near=1&lat=…&lon=…&r=…&kw=…` 近くの麺の店（ホットペッパー。AIは使わない）
+- `?gplaces=1` Googleで近くの店を探してよいか（1日150回の札。検索そのものはページからGoogleに直接聞く）
 - `?tshirt=1` Tシャツの受付状況
 - POST `{q:…}` 麺AI／POST `{action:"tshirt",…}` Tシャツ予約（同じ相手から1日5件まで）
 
 ## 外部サービスと無料枠
 
-- Googleマップ（プロジェクト「menbu-map」）: 鍵「menbu-map browser」は `https://menbu-map.github.io/*` とMaps JavaScript API・Places API (New) だけに制限。鍵は Supabase の `GOOGLE_MAPS_BROWSER_KEY` にだけ置く。Google側の1日上限（地図320回、店の検索30回、写真30回、ほかは0）で月の無料枠内に収めている。
+- Googleマップ（プロジェクト「menbu-map」）: 鍵「menbu-map browser」は `https://menbu-map.github.io/*` とMaps JavaScript API・Places API (New) だけに制限。鍵は Supabase の `GOOGLE_MAPS_BROWSER_KEY` にだけ置く。Google側の1日上限（地図320回、近くの店の検索150回、店のカード用の検索30回、写真30回、ほかは0）で月の無料枠内に収めている。
 - ホットペッパーグルメ Webサービス: 近くの麺の店と麺AIの候補。表示には「Powered by ホットペッパーグルメ Webサービス」を出す。
 - OpenStreetMap（Overpass）: 近くの麺の店の補助。混んでいて取れないことがある。
 - 麺AIの文章: OpenAI（gpt-4o-mini）。
