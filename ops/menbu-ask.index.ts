@@ -144,12 +144,51 @@ function menbuCandidates(lat,lon,maxD){
   if(lat!=null){ out.sort(function(a,b){ return a.d-b.d; }); }
   return out;
 }
+// ===== 麺部Tシャツの予約（部員向け。支払いは例会で手渡し） =====
+var TS_IP_CAP = 5; // 同じ相手からの予約は1日5件まで
+function jstToday(){ return new Date(Date.now()+9*3600*1000).toISOString().slice(0,10); }
+async function tshirtConfig(){
+  var r=await rest("menbu_tshirt_config?id=eq.1&select=open,title,price,deadline,sizes,colors,handover,note");
+  var rows=r.ok?await r.json():[]; return rows[0]||null;
+}
+function tshirtOpen(c){ return !!(c&&c.open&&c.price&&c.deadline&&jstToday()<=c.deadline); }
+async function tshirtTotal(){
+  var r=await rest("menbu_tshirt_orders?status=neq.canceled&select=qty");
+  var rows=r.ok?await r.json():[]; return rows.reduce(function(s,x){ return s+(x.qty||0); },0);
+}
+function clean(s,n){ return String(s==null?"":s).replace(/[\u0000-\u001f\u007f<>]/g," ").trim().slice(0,n); }
+async function tshirtOrder(req,origin,body){
+  var c=await tshirtConfig();
+  if(!tshirtOpen(c)){ return reply(origin,409,{error:"closed"}); }
+  var name=clean(body.name,30), contact=clean(body.contact,40), size=clean(body.size,10), color=clean(body.color,20), note=clean(body.note,100);
+  var qty=Number(body.qty);
+  if(!name){ return reply(origin,400,{error:"name"}); }
+  if((c.sizes||[]).indexOf(size)<0){ return reply(origin,400,{error:"size"}); }
+  if((c.colors||[]).length&&(c.colors||[]).indexOf(color)<0){ return reply(origin,400,{error:"color"}); }
+  if(!(Number.isInteger(qty)&&qty>=1&&qty<=5)){ return reply(origin,400,{error:"qty"}); }
+  var ih=await clientKey(req);
+  var since=new Date(Date.now()-24*3600*1000).toISOString();
+  var cr=await rest("menbu_tshirt_orders?ip_hash=eq."+ih+"&created_at=gte."+encodeURIComponent(since)+"&select=id");
+  var recent=cr.ok?await cr.json():[];
+  if(recent.length>=TS_IP_CAP){ return reply(origin,429,{error:"cap"}); }
+  var ir=await rest("menbu_tshirt_orders",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({name:name,contact:contact,size:size,color:color,qty:qty,note:note,ip_hash:ih})});
+  if(!ir.ok){ return reply(origin,502,{error:"save"}); }
+  var row=(await ir.json())[0]||{};
+  return reply(origin,200,{ok:true,no:row.id,total:qty*c.price});
+}
 Deno.serve(async function(req){
   var origin=req.headers.get("origin");
   if(req.method==="OPTIONS"){ return new Response(null,{status:204,headers:cors(origin)}); }
   var hasLlm=!!(ANTHROPIC_KEY||OPENAI_KEY);
   try{ await loadShops(); }catch(e){}
   if(req.method==="GET"){
+    if(new URL(req.url).searchParams.get("tshirt")){
+      try{
+        var c=await tshirtConfig();
+        if(!c){ return reply(origin,200,{open:false}); }
+        return reply(origin,200,{open:tshirtOpen(c),title:c.title,price:c.price,deadline:c.deadline,sizes:c.sizes,colors:c.colors,handover:c.handover,note:c.note,total:await tshirtTotal()});
+      }catch(e){ return reply(origin,200,{open:false}); }
+    }
     if(new URL(req.url).searchParams.get("shops")){
       // Googleマップの読み込みは1日300回まで（月1万回の無料枠に収める）。超えた日は国土地理院の地図で動く
       var gk=(origin&&ORIGIN_RE.test(origin))?(Deno.env.get("GOOGLE_MAPS_BROWSER_KEY")||""):"";
@@ -161,8 +200,9 @@ Deno.serve(async function(req){
   }
   if(req.method!=="POST"){ return reply(origin,405,{error:"method"}); }
   if(!origin||!ORIGIN_RE.test(origin)){ return reply(origin,403,{error:"origin"}); }
-  if(!hasLlm){ return reply(origin,503,{error:"setup",missing:"llm"}); }
   var body; try{ body=await req.json(); }catch(e){ return reply(origin,400,{error:"bad"}); }
+  if(body&&body.action==="tshirt"){ try{ return await tshirtOrder(req,origin,body); }catch(e){ console.error("tshirt",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); } }
+  if(!hasLlm){ return reply(origin,503,{error:"setup",missing:"llm"}); }
   var q=String((body&&body.q)||"").trim().slice(0,200);
   if(!q){ return reply(origin,400,{error:"empty"}); }
   var only=!!body.only;

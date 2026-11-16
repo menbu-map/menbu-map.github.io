@@ -37,6 +37,15 @@ h1{margin:0;font-family:var(--brush);font-weight:400;font-size:38px;line-height:
 #aistatus:empty{display:none}
 #aiout{display:flex;flex-direction:column;gap:8px}
 #aiout:empty{display:none}
+.ts label{display:flex;flex-direction:column;gap:2px;font-size:13px;font-weight:700;margin:6px 0}
+.ts input,.ts select{font:inherit;font-size:16px;font-weight:400;padding:8px 10px;border:1px solid var(--sumi);border-radius:4px;background:#fff}
+.ts .tsrow{display:flex;gap:8px;flex-wrap:wrap}
+.ts .tsrow label{flex:1 1 90px}
+.ts button{font:inherit;font-size:16px;font-weight:700;border-radius:4px;padding:10px 22px;cursor:pointer;border:2px solid var(--sumi);background:var(--sumi);color:#fff;margin-top:6px}
+.ts button:disabled{opacity:.5}
+.ts .tsinfo{margin:0 0 6px;font-size:14px;white-space:pre-line}
+#tsstatus{margin:6px 0 0;font-size:14px;font-weight:700}
+#tsstatus:empty{display:none}
 .ailead{margin:0;font-weight:700}
 .aicard{border:1px solid var(--line);border-left:5px solid var(--sumi);border-radius:4px;padding:10px 12px;display:flex;flex-direction:column;gap:5px}
 .aicard.menbu{border-left-color:var(--shu)}
@@ -114,6 +123,21 @@ footer p{margin:0 0 4px}
     <p id="aistatus" aria-live="polite"></p>
     <div id="aiout"></div>
     <p id="gattr" class="gattr" hidden>未開拓の店の情報：Powered by <a href="https://webservice.recruit.co.jp/" target="_blank" rel="noopener">ホットペッパーグルメ Webサービス</a></p>
+  </section>
+  <section id="tshirt" class="ai ts" hidden>
+    <h2 id="tstitle">麺部Tシャツ 予約</h2>
+    <p id="tsinfo" class="tsinfo"></p>
+    <form id="tsform">
+      <label for="tsname">お名前（LINEの表示名）<input id="tsname" type="text" maxlength="30" autocomplete="nickname" required></label>
+      <div class="tsrow">
+        <label for="tssize">サイズ<select id="tssize" required></select></label>
+        <label for="tscolor" id="tscolorwrap" hidden>色<select id="tscolor"></select></label>
+        <label for="tsqty">枚数<select id="tsqty"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+      </div>
+      <label for="tsnote">ひとこと（任意）<input id="tsnote" type="text" maxlength="100" placeholder="例：次の例会は欠席なので○月の会で受け取りたい"></label>
+      <button type="submit" id="tsgo">予約する</button>
+    </form>
+    <p id="tsstatus" aria-live="polite"></p>
   </section>
   <form id="find" class="find">
     <label for="place">場所<input id="place" type="text" autocomplete="off" placeholder="例：札幌駅、麻生、すすきの"></label>
@@ -553,6 +577,36 @@ document.getElementById("find").addEventListener("submit",function(ev){
     statusEl.textContent="「"+place+"」の場所が見つかりませんでした。駅名や住所で入れ直してください。";
   });
 });
+// 麺部Tシャツの予約（受付中のときだけ表示）
+(function(){
+  var API="https://uvdodybrxmllldazdtbu.supabase.co/functions/v1/menbu-ask";
+  var box=document.getElementById("tshirt"), st=document.getElementById("tsstatus"), go=document.getElementById("tsgo"), cfg=null;
+  function fill(sel,arr){ sel.textContent=""; arr.forEach(function(v){ var o=document.createElement("option"); o.value=v; o.textContent=v; sel.appendChild(o); }); }
+  fetch(API+"?tshirt=1").then(function(r){ return r.json(); }).then(function(c){
+    if(!c||!c.open){ return; }
+    cfg=c; box.hidden=false;
+    document.getElementById("tstitle").textContent=(c.title||"麺部Tシャツ")+" 予約";
+    var d=c.deadline?c.deadline.replace(/^(\d+)-(\d+)-(\d+)$/,function(_,y,m,dd){ return Number(m)+"月"+Number(dd)+"日"; }):"";
+    document.getElementById("tsinfo").textContent="1枚 "+Number(c.price).toLocaleString()+"円　締切 "+d+"\n"+(c.handover||"")+(c.note?"\n"+c.note:"")+"\n今の予約："+(c.total||0)+"枚";
+    fill(document.getElementById("tssize"),c.sizes||[]);
+    if((c.colors||[]).length){ document.getElementById("tscolorwrap").hidden=false; fill(document.getElementById("tscolor"),c.colors); }
+  }).catch(function(){});
+  document.getElementById("tsform").addEventListener("submit",function(ev){
+    ev.preventDefault(); if(!cfg){ return; }
+    var name=document.getElementById("tsname").value.trim();
+    if(!name){ st.textContent="お名前を入れてください。"; return; }
+    var body={action:"tshirt",name:name,size:document.getElementById("tssize").value,qty:Number(document.getElementById("tsqty").value),note:document.getElementById("tsnote").value.trim()};
+    if((cfg.colors||[]).length){ body.color=document.getElementById("tscolor").value; }
+    go.disabled=true; st.textContent="送っています…";
+    fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)}).then(function(r){ return r.json().then(function(j){ return {code:r.status,j:j}; }); }).then(function(x){
+      go.disabled=false;
+      if(x.code===200){ st.textContent="予約を受け付けました（受付番号 "+x.j.no+"・"+body.size+(body.color?"・"+body.color:"")+"×"+body.qty+"枚・"+Number(x.j.total).toLocaleString()+"円）。お支払いは受け取りのときで大丈夫です。変更や取り消しは山下までLINEでどうぞ。"; document.getElementById("tsform").reset(); return; }
+      if(x.code===409){ st.textContent="予約の受付は終了しました。"; return; }
+      if(x.code===429){ st.textContent="今日の予約の上限に達しました。追加は山下までLINEでどうぞ。"; return; }
+      st.textContent="送れませんでした。入力を確かめて、もう一度お試しください。";
+    }).catch(function(){ go.disabled=false; st.textContent="送れませんでした。通信の状態を確かめて、もう一度お試しください。"; });
+  });
+})();
 var DCACHE={};
 function attrLink(a){
   if(!a){ return null; }
