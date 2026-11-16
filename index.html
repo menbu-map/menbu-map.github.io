@@ -549,7 +549,7 @@ function render(state){
   var busyNote="ほかの麺の店は今は取れませんでした。少し待って「このエリアで探す」を押してください。";
   if(state==="init"){ statusEl.textContent="麺部の店 "+shown+"軒。右下の◎で近い順に並びます"; return; }
   if(state==="loading"){ statusEl.textContent="麺部の店 "+menbu+"軒を表示。ほかの麺の店を探しています…"; return; }
-  if(state==="partial"){ statusEl.textContent=shown+"軒を近い順に表示（うち麺部の店 "+menbu+"軒）。ほかの店をもう少し探しています…"; return; }
+  if(state==="partial"){ statusEl.textContent=shown?"近くに"+shown+"軒（麺部の店 "+menbu+"軒）・さらに探しています…":"麺の店を探しています…"; return; }
   if(state==="failed"){ statusEl.textContent=(menbu?"麺部の店 "+menbu+"軒を表示。":"条件に合う麺部の店はありません。")+busyNote; return; }
   if(!shown){ statusEl.textContent="条件に合う店は見つかりませんでした。地図を広げて「このエリアで探す」か、絞り込みを外してください。"; return; }
   statusEl.textContent="近くに"+shown+"軒（麺部の店 "+menbu+"軒）";
@@ -578,7 +578,7 @@ Array.prototype.forEach.call(document.querySelectorAll(".chip[data-kw]"),functio
   });
 });
 function geocode(q){
-  var u="https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=jp&accept-language=ja&viewbox=139.3,45.6,145.9,41.3&q="+encodeURIComponent(q);
+  var u="https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=jp&accept-language=ja&q="+encodeURIComponent(q);
   return fetch(u).then(function(r){ return r.json(); }).then(function(j){
     if(j && j.length){ return {lat:+j[0].lat,lon:+j[0].lon}; }
     throw new Error("none");
