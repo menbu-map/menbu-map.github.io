@@ -577,14 +577,22 @@ document.getElementById("find").addEventListener("submit",function(ev){
     statusEl.textContent="「"+place+"」の場所が見つかりませんでした。駅名や住所で入れ直してください。";
   });
 });
-// 麺部Tシャツの予約（受付中のときだけ表示）
+// 麺部Tシャツの予約（受付前は coming soon、受付中はフォーム、締切後は非表示）
 (function(){
   var API="https://uvdodybrxmllldazdtbu.supabase.co/functions/v1/menbu-ask";
   var box=document.getElementById("tshirt"), st=document.getElementById("tsstatus"), go=document.getElementById("tsgo"), cfg=null;
   function fill(sel,arr){ sel.textContent=""; arr.forEach(function(v){ var o=document.createElement("option"); o.value=v; o.textContent=v; sel.appendChild(o); }); }
   fetch(API+"?tshirt=1").then(function(r){ return r.json(); }).then(function(c){
-    if(!c||!c.open){ return; }
-    cfg=c; box.hidden=false;
+    if(!c){ return; }
+    if(!c.open){
+      // 受付前（締切が未設定）は予告だけ出す。締切を過ぎたら出さない
+      if(c.deadline){ return; }
+      box.hidden=false; document.getElementById("tsform").hidden=true;
+      document.getElementById("tstitle").textContent=c.title||"麺部Tシャツ";
+      document.getElementById("tsinfo").textContent="coming soon...\n予約が始まったらここから申し込めます。";
+      return;
+    }
+    cfg=c; box.hidden=false; document.getElementById("tsform").hidden=false;
     document.getElementById("tstitle").textContent=(c.title||"麺部Tシャツ")+" 予約";
     var d=c.deadline?c.deadline.replace(/^(\d+)-(\d+)-(\d+)$/,function(_,y,m,dd){ return Number(m)+"月"+Number(dd)+"日"; }):"";
     document.getElementById("tsinfo").textContent="1枚 "+Number(c.price).toLocaleString()+"円　締切 "+d+"\n"+(c.handover||"")+(c.note?"\n"+c.note:"")+"\n今の予約："+(c.total||0)+"枚";
