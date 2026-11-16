@@ -434,7 +434,7 @@ function words(k){
   return out;
 }
 function hit(x){
-  if(!kw){ return true; }
+  if(!kw||x.kwhit){ return true; }
   var t=norm(x.name+" "+x.kind+" "+(x.cui||"")+" "+(x.mi>=0?MENBU[x.mi][0]+" "+MENBU[x.mi][1]:""));
   return kw.split(/[\s\u3000、,]+/).filter(Boolean).every(function(k){ return words(k).some(function(w){ return t.indexOf(w)>=0; }); });
 }
@@ -479,9 +479,9 @@ function search(lat,lon,showMe,r,fit){
   render("loading");
   // ほかの麺の店：ホットペッパー（速くて安定）とOpenStreetMapを同時に取り、届いた順に足す。両方だめなときだけ失敗にする
   var token={}; searchToken=token;
-  function addShop(name,la,lo,mi,kd,cui){
-    for(var k=0;k<results.length;k++){ var y=results[k]; if(dist(la,lo,y.lat,y.lon)<60&&(norm(y.name)===norm(name)||norm(y.name).indexOf(norm(name))>=0||norm(name).indexOf(norm(y.name))>=0)){ return; } }
-    results.push({name:name,lat:la,lon:lo,mi:mi,kind:kd,cui:cui||"",d:dist(lat,lon,la,lo)});
+  function addShop(name,la,lo,mi,kd,cui,kh){
+    for(var k=0;k<results.length;k++){ var y=results[k]; if(dist(la,lo,y.lat,y.lon)<60&&(norm(y.name)===norm(name)||norm(y.name).indexOf(norm(name))>=0||norm(name).indexOf(norm(y.name))>=0)){ if(kh){ y.kwhit=true; } return; } }
+    results.push({name:name,lat:la,lon:lo,mi:mi,kind:kd,cui:cui||"",d:dist(lat,lon,la,lo),kwhit:!!kh});
   }
   function seedNear(la,lo,mi){ return mi>=0&&SEEDSET[mi]&&dist(la,lo,SEEDSET[mi][1],SEEDSET[mi][2])<300; }
   var pending=2, gotAny=false;
@@ -491,13 +491,14 @@ function search(lat,lon,showMe,r,fit){
     pending--;
     if(ok||pending===0){ if(ok||pending===0){ setBusy(false); } render(gotAny?(pending?"partial":"ok"):(pending?"loading":"failed")); }
   }
-  fetch(API_NEAR+"?near=1&lat="+lat.toFixed(5)+"&lon="+lon.toFixed(5)+"&r="+r).then(function(res){ if(!res.ok){ throw new Error(res.status); } return res.json(); }).then(function(j){
+  var flav=kw.split(/[\s\u3000、,]+/).filter(function(w){ return w&&!/^(ラーメン|らーめん|そば|蕎麦|うどん|麺)$/.test(w); }).join(" ");
+  fetch(API_NEAR+"?near=1&lat="+lat.toFixed(5)+"&lon="+lon.toFixed(5)+"&r="+r+(flav?"&kw="+encodeURIComponent(flav):"")).then(function(res){ if(!res.ok){ throw new Error(res.status); } return res.json(); }).then(function(j){
     (j.shops||[]).forEach(function(s){
       if(dist(lat,lon,s.lat,s.lon)>r){ return; }
       var mi=matchMenbu(s.name,s.lat,s.lon);
       if(seedNear(s.lat,s.lon,mi)){ return; }
       if(mi>=0&&SEEDSET[mi]){ mi=-1; }
-      addShop(s.name,s.lat,s.lon,mi,s.kind,s.genre);
+      addShop(s.name,s.lat,s.lon,mi,s.kind,s.genre,s.kwhit);
     });
     usedHp=true; document.getElementById("hpattr").hidden=false;
     done(true);

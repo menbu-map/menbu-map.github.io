@@ -146,9 +146,9 @@ function menbuCandidates(lat,lon,maxD){
 }
 // ===== 近くの麺の店（地図の「ほかの麺の店」用。ホットペッパーから取る。AIは使わないので費用はかからない） =====
 var NEAR_CACHE = new Map();
-async function hpNear(key,lat,lon,r){
+async function hpNear(key,lat,lon,r,kw){
   var range=r<=300?1:r<=500?2:r<=1000?3:r<=2000?4:5;
-  var ck=lat.toFixed(3)+","+lon.toFixed(3)+","+range;
+  var ck=lat.toFixed(3)+","+lon.toFixed(3)+","+range+","+(kw||"");
   var hit=NEAR_CACHE.get(ck);
   if(hit&&Date.now()-hit.t<600000){ return hit.v; }
   async function call(extra){
@@ -161,16 +161,18 @@ async function hpNear(key,lat,lon,r){
     var j=await res.json();
     return (j&&j.results&&Array.isArray(j.results.shop))?j.results.shop:[];
   }
-  var lists=await Promise.all([call({genre:"G013"}),call({keyword:"そば"}).catch(function(){ return []; }),call({keyword:"うどん"}).catch(function(){ return []; })]);
+  // 味の言葉（豚骨・味噌など）があれば、ラーメンの店をその言葉で探した結果を先に入れて「合う店」の印をつける
+  var lists=await Promise.all([kw?call({genre:"G013",keyword:kw}).catch(function(){ return []; }):Promise.resolve([]),call({genre:"G013"}),call({keyword:"そば"}).catch(function(){ return []; }),call({keyword:"うどん"}).catch(function(){ return []; })]);
   var seen={}, out=[];
-  lists.forEach(function(arr,li){
+  lists.forEach(function(arr,li0){
+    var li=li0===0?0:li0-1, hitKw=li0===0;
     arr.forEach(function(s){
       if(seen[s.id]){ return; }
       if(li>0&&!/そば|蕎麦|ソバ|うどん|饂飩|ウドン|麺/.test(String(s.name||""))){ return; }
       seen[s.id]=1;
       var la=Number(s.lat), lo=Number(s.lng);
       if(!Number.isFinite(la)||!Number.isFinite(lo)){ return; }
-      out.push({name:String(s.name||"").slice(0,60),lat:la,lon:lo,kind:li===0?"ラーメン":(li===1?"そば":"うどん"),genre:(s.genre&&s.genre.name)||"",uri:(s.urls&&s.urls.pc)||""});
+      out.push({name:String(s.name||"").slice(0,60),lat:la,lon:lo,kind:li===0?"ラーメン":(li===1?"そば":"うどん"),genre:(s.genre&&s.genre.name)||"",uri:(s.urls&&s.urls.pc)||"",kwhit:hitKw||undefined});
     });
   });
   if(NEAR_CACHE.size>300){ NEAR_CACHE.clear(); }
@@ -223,7 +225,8 @@ Deno.serve(async function(req){
       try{
         var nk=await hotpepperKey();
         if(!nk){ return reply(origin,503,{error:"setup"}); }
-        return reply(origin,200,{shops:await hpNear(nk,nla,nlo,Math.min(Math.max(nr,300),5000))});
+        var nkw=String(sp.get("kw")||"").replace(/[\u0000-\u001f<>"'&]/g,"").trim().slice(0,20);
+        return reply(origin,200,{shops:await hpNear(nk,nla,nlo,Math.min(Math.max(nr,300),5000),nkw)});
       }catch(e){ console.error("near",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); }
     }
     if(new URL(req.url).searchParams.get("tshirt")){
