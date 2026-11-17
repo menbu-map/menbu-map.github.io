@@ -163,17 +163,17 @@ async function hpNear(key,lat,lon,r,kw){
     return (j&&j.results&&Array.isArray(j.results.shop))?j.results.shop:[];
   }
   // 味の言葉（豚骨・味噌など）があれば、ラーメンの店をその言葉で探した結果を先に入れて「合う店」の印をつける
-  var lists=await Promise.all([kw?call({genre:"G013",keyword:kw}).catch(function(){ return []; }):Promise.resolve([]),call({genre:"G013"}),call({keyword:"そば"}).catch(function(){ return []; }),call({keyword:"うどん"}).catch(function(){ return []; })]);
+  var lists=await Promise.all([kw?call({genre:"G013",keyword:kw}).catch(function(){ return []; }):Promise.resolve([]),call({genre:"G013"}),call({keyword:"そば"}).catch(function(){ return []; }),call({keyword:"うどん"}).catch(function(){ return []; }),call({keyword:"パスタ"}).catch(function(){ return []; })]);
   var seen={}, out=[];
   lists.forEach(function(arr,li0){
     var li=li0===0?0:li0-1, hitKw=li0===0;
     arr.forEach(function(s){
       if(seen[s.id]){ return; }
-      if(li>0&&!/そば|蕎麦|ソバ|うどん|饂飩|ウドン|麺/.test(String(s.name||""))){ return; }
+      if(li>0&&!/そば|蕎麦|ソバ|うどん|饂飩|ウドン|麺|パスタ|スパゲティ|スパゲッティ/.test(String(s.name||""))){ return; }
       seen[s.id]=1;
       var la=Number(s.lat), lo=Number(s.lng);
       if(!Number.isFinite(la)||!Number.isFinite(lo)){ return; }
-      out.push({name:String(s.name||"").slice(0,60),lat:la,lon:lo,kind:li===0?"ラーメン":(li===1?"そば":"うどん"),genre:(s.genre&&s.genre.name)||"",uri:(s.urls&&s.urls.pc)||"",kwhit:hitKw||undefined});
+      out.push({name:String(s.name||"").slice(0,60),lat:la,lon:lo,kind:li===0?"ラーメン":(li===1?"そば":(li===2?"うどん":"パスタ")),genre:(s.genre&&s.genre.name)||"",uri:(s.urls&&s.urls.pc)||"",kwhit:hitKw||undefined});
     });
   });
   if(NEAR_CACHE.size>300){ NEAR_CACHE.clear(); }
