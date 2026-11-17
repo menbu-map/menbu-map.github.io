@@ -163,19 +163,21 @@ async function hpNear(key,lat,lon,r,kw){
     return (j&&j.results&&Array.isArray(j.results.shop))?j.results.shop:[];
   }
   // 味の言葉（豚骨・味噌など）があれば、ラーメンの店をその言葉で探した結果を先に入れて「合う店」の印をつける
+  // つけ麺はラーメンの一種だが、見た目も注文の仕方も違うので「ラーメン」ジャンル（G013）の中でキーワード検索し、別の種類として分けて出す
   // そば・うどんにはラーメンのような専用ジャンルコードが無いため、ホットペッパーのキーワード検索（店名・ジャンル・紹介文を横断）をそのまま使う。
   // パスタは「イタリアン・フレンチ」ジャンル（G006）を、ラーメン（G013）と同じく丸ごと検索する。
   // どの一覧も、店名だけで絞り込み直すと取りこぼすので、ホットペッパー自身の検索結果をそのまま信用する（Googleマップ並みに拾うため）
-  var lists=await Promise.all([kw?call({genre:"G013",keyword:kw}).catch(function(){ return []; }):Promise.resolve([]),call({genre:"G013"}),call({keyword:"そば"}).catch(function(){ return []; }),call({keyword:"うどん"}).catch(function(){ return []; }),call({genre:"G006"}).catch(function(){ return []; })]);
+  var lists=await Promise.all([kw?call({genre:"G013",keyword:kw}).catch(function(){ return []; }):Promise.resolve([]),call({genre:"G013",keyword:"つけ麺"}).catch(function(){ return []; }),call({genre:"G013"}),call({keyword:"そば"}).catch(function(){ return []; }),call({keyword:"うどん"}).catch(function(){ return []; }),call({genre:"G006"}).catch(function(){ return []; })]);
+  var KIND=["ラーメン","つけ麺","ラーメン","そば","うどん","パスタ"];
   var seen={}, out=[];
   lists.forEach(function(arr,li0){
-    var li=li0===0?0:li0-1, hitKw=li0===0;
+    var hitKw=li0===0;
     arr.forEach(function(s){
       if(seen[s.id]){ return; }
       seen[s.id]=1;
       var la=Number(s.lat), lo=Number(s.lng);
       if(!Number.isFinite(la)||!Number.isFinite(lo)){ return; }
-      out.push({name:String(s.name||"").slice(0,60),lat:la,lon:lo,kind:li===0?"ラーメン":(li===1?"そば":(li===2?"うどん":"パスタ")),genre:(s.genre&&s.genre.name)||"",uri:(s.urls&&s.urls.pc)||"",kwhit:hitKw||undefined});
+      out.push({name:String(s.name||"").slice(0,60),lat:la,lon:lo,kind:KIND[li0],genre:(s.genre&&s.genre.name)||"",uri:(s.urls&&s.urls.pc)||"",kwhit:hitKw||undefined});
     });
   });
   if(NEAR_CACHE.size>300){ NEAR_CACHE.clear(); }
