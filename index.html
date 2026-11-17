@@ -215,6 +215,7 @@ li.menbu{border-left-color:var(--shu)}
     <button type="button" class="chip" data-kw="つけ麺" aria-pressed="false">つけ麺</button>
     <button type="button" class="chip" data-kw="そば" aria-pressed="false">そば</button>
     <button type="button" class="chip" data-kw="うどん" aria-pressed="false">うどん</button>
+    <button type="button" class="chip" data-kw="パスタ" aria-pressed="false">パスタ</button>
   </div>
   <button type="button" id="area" class="areabtn" hidden>このエリアで探す</button>
 </div>
@@ -411,9 +412,9 @@ var SEEDSET = {}; SEEDS.forEach(function(s){ SEEDSET[s[0]]=s; });
 var AREA_TXT = {"0": "札幌駅と大通の間（北1条西2）", "1": "すすきの（ココノ ススキノ）", "2": "すすきの（南4条西1）", "3": "中島公園の近く", "4": "中島公園の近く（南8条西3）", "5": "中島公園の近く（南12条西1）", "6": "豊平区豊平（豊平公園駅の近く）", "8": "中央区南4条西10", "9": "東区北49条東4", "11": "西区西野", "12": "すすきの（南3条西4）", "13": "小樽市銭函", "14": "恵庭市恵み野", "22": "中央区南8条西13", "24": "豊平区中の島", "25": "中央区北8条西13", "27": "北区太平", "31": "豊平区月寒東", "33": "狸小路の近く（南2条西5）", "38": "北区新琴似", "41": "東区伏古", "44": "すすきの（南6条西3）", "48": "中央区南16条西9", "62": "奈井江町"};
 var API_NEAR="https://uvdodybrxmllldazdtbu.supabase.co/functions/v1/menbu-ask", searchToken=null, usedHp=false;
 var ENDPOINTS = ["https://overpass-api.de/api/interpreter","https://overpass.kumi.systems/api/interpreter","https://overpass.private.coffee/api/interpreter"];
-var NOODLE_WORDS = "ラーメン|らーめん|らぁ麺|らあめん|拉麺|麺|麵|そば|蕎麦|うどん";
+var NOODLE_WORDS = "ラーメン|らーめん|らぁ麺|らあめん|拉麺|麺|麵|そば|蕎麦|うどん|パスタ|スパゲティ|スパゲッティ";
 var NOODLE_RE = new RegExp(NOODLE_WORDS);
-var CUISINE_RE = /ramen|noodle|soba|udon|champon|tsukemen/;
+var CUISINE_RE = /ramen|noodle|soba|udon|champon|tsukemen|pasta|italian/;
 
 function norm(s){
   return String(s||"").normalize("NFKC").toLowerCase().replace(/[\s　・･\-‐－―ー'’.．,，()（）「」]/g,"");
@@ -458,6 +459,7 @@ function kind(tags,name){
   if(/ramen|tsukemen/.test(c)||/ラーメン|らーめん|らぁ麺|拉麺/.test(name)){ return "ラーメン"; }
   if(/soba/.test(c)||/蕎麦|そば/.test(name)){ return "そば"; }
   if(/udon/.test(c)||/うどん/.test(name)){ return "うどん"; }
+  if(/pasta|italian/.test(c)||/パスタ|スパゲティ|スパゲッティ/.test(name)){ return "パスタ"; }
   return "麺";
 }
 function el(t,c,txt){ var n=document.createElement(t); if(c){n.className=c;} if(txt!=null){n.textContent=txt;} return n; }
@@ -528,7 +530,7 @@ function googleMap(v){
 }
 var M=leafletMap({lat:43.0608,lon:141.3545,z:14});
 var results=[], busy=false, hasOrigin=false, last=null, lastR=1000, lastState="init", kw="";
-var SYN = [["つけ麺","つけめん","tsukemen"],["ラーメン","らーめん","らぁ麺","拉麺","ramen"],["そば","蕎麦","soba"],["うどん","udon"],["担々麺","担担麺","坦々麺","担々","担担","坦々","タンタン","dandan"],["味噌","みそ"],["醤油","正油","しょうゆ"],["ちゃんぽん","チャンポン","champon"],["油そば","まぜそば"],["鶏白湯","鳥白湯","パイタン"]];
+var SYN = [["つけ麺","つけめん","tsukemen"],["ラーメン","らーめん","らぁ麺","拉麺","ramen"],["そば","蕎麦","soba"],["うどん","udon"],["パスタ","スパゲティ","スパゲッティ","pasta"],["担々麺","担担麺","坦々麺","担々","担担","坦々","タンタン","dandan"],["味噌","みそ"],["醤油","正油","しょうゆ"],["ちゃんぽん","チャンポン","champon"],["油そば","まぜそば"],["鶏白湯","鳥白湯","パイタン"]];
 function words(k){
   var n=norm(k), out=[n], i, j;
   for(i=0;i<SYN.length;i++){ for(j=0;j<SYN[i].length;j++){ if(norm(SYN[i][j])===n){ return SYN[i].map(norm); } } }
@@ -548,7 +550,7 @@ function buildQuery(lat,lon,r){
   var a="(around:"+r+","+lat+","+lon+")";
   var am='["amenity"~"^(restaurant|fast_food|cafe)$"]';
   return '[out:json][timeout:25];('+
-    'nwr'+am+'["cuisine"~"ramen|noodle|soba|udon|champon|tsukemen"]'+a+';'+
+    'nwr'+am+'["cuisine"~"ramen|noodle|soba|udon|champon|tsukemen|pasta|italian"]'+a+';'+
     'nwr'+am+'["name"~"'+NOODLE_WORDS+'|'+keys.join("|")+'",i]'+a+';'+
     ');out center tags;';
 }
@@ -593,7 +595,7 @@ function search(lat,lon,showMe,r,fit){
     pending--;
     if(ok||pending===0){ if(ok||pending===0){ setBusy(false); } render(gotAny?(pending?"partial":"ok"):(pending?"loading":"failed")); }
   }
-  var flav=kw.split(/[\s\u3000、,]+/).filter(function(w){ return w&&!/^(ラーメン|らーめん|そば|蕎麦|うどん|麺)$/.test(w); }).join(" ");
+  var flav=kw.split(/[\s\u3000、,]+/).filter(function(w){ return w&&!/^(ラーメン|らーめん|そば|蕎麦|うどん|麺|パスタ)$/.test(w); }).join(" ");
   fetch(API_NEAR+"?near=1&lat="+lat.toFixed(5)+"&lon="+lon.toFixed(5)+"&r="+r+(flav?"&kw="+encodeURIComponent(flav):"")).then(function(res){ if(!res.ok){ throw new Error(res.status); } return res.json(); }).then(function(j){
     (j.shops||[]).forEach(function(s){
       if(dist(lat,lon,s.lat,s.lon)>r){ return; }
