@@ -181,7 +181,7 @@ async function hpNear(key,lat,lon,r,kw){
   return out;
 }
 // ===== 麺部Tシャツの予約（部員向け。支払いは例会で手渡し） =====
-var EV_OK = {visit:1,search:1,card:1,route:1,share_line:1,share_copy:1,share_open:1,zero:1,went:1,want:1,stamps:1,ai:1};
+var EV_OK = {visit:1,search:1,card:1,route:1,share_line:1,share_copy:1,share_open:1,zero:1,went:1,want:1,stamps:1,ai:1,points:1};
 var REPORT_REASONS = ["閉店している","場所がちがう","麺の店ではない","その他"];
 var TS_IP_CAP = 5; // 同じ相手からの予約は1日5件まで
 function jstToday(){ return new Date(Date.now()+9*3600*1000).toISOString().slice(0,10); }
@@ -238,6 +238,27 @@ async function rsvpSet(req,origin,body){
   var ih=await clientKey(req);
   var ir=await rest("menbu_rsvp?on_conflict=meetup_id,name",{method:"POST",headers:{Prefer:"resolution=merge-duplicates"},body:JSON.stringify({meetup_id:mid,name:name,status:status,ip_hash:ih,updated_at:new Date().toISOString()})});
   if(!ir.ok){ return reply(origin,502,{error:"save"}); }
+  if(status==="yes"){ await pointAward(name,"rsvp",String(mid)); } else { await pointRevoke(name,"rsvp",String(mid)); }
+  return reply(origin,200,{ok:true});
+}
+// ===== 麺部ポイント（出欠の「参加」・巡礼の「行った」で貯まる） =====
+async function pointAward(name,source,ref){
+  try{ await rest("menbu_points?on_conflict=name,source,ref",{method:"POST",headers:{Prefer:"resolution=ignore-duplicates"},body:JSON.stringify({name:name,source:source,ref:ref,points:1})}); }catch(e){}
+}
+async function pointRevoke(name,source,ref){
+  try{ await rest("menbu_points?name=eq."+encodeURIComponent(name)+"&source=eq."+encodeURIComponent(source)+"&ref=eq."+encodeURIComponent(ref),{method:"DELETE"}); }catch(e){}
+}
+async function pointsTotals(){
+  var r=await rest("menbu_points?select=name,points");
+  var rows=r.ok?await r.json():[];
+  var m={};
+  rows.forEach(function(x){ m[x.name]=(m[x.name]||0)+(Number(x.points)||0); });
+  return Object.keys(m).map(function(n){ return {name:n,points:m[n]}; }).sort(function(a,b){ return b.points-a.points; }).slice(0,50);
+}
+async function visitSet(req,origin,body){
+  var name=clean(body.name,30), key=clean(body.key,120), on=!!body.on;
+  if(!name||!key){ return reply(origin,400,{error:"bad"}); }
+  if(on){ await pointAward(name,"visit",key); } else { await pointRevoke(name,"visit",key); }
   return reply(origin,200,{ok:true});
 }
 Deno.serve(async function(req){
@@ -267,6 +288,9 @@ Deno.serve(async function(req){
     }
     if(sp.get("meetups")){
       try{ return reply(origin,200,{meetups:await meetupsList()}); }catch(e){ console.error("meetups",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); }
+    }
+    if(sp.get("points")){
+      try{ return reply(origin,200,{points:await pointsTotals()}); }catch(e){ console.error("points",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); }
     }
     if(new URL(req.url).searchParams.get("tshirt")){
       try{
@@ -310,6 +334,7 @@ Deno.serve(async function(req){
   }
   if(body&&body.action==="tshirt"){ try{ return await tshirtOrder(req,origin,body); }catch(e){ console.error("tshirt",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); } }
   if(body&&body.action==="rsvp"){ try{ return await rsvpSet(req,origin,body); }catch(e){ console.error("rsvp",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); } }
+  if(body&&body.action==="visit"){ try{ return await visitSet(req,origin,body); }catch(e){ console.error("visit",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); } }
   if(!hasLlm){ return reply(origin,503,{error:"setup",missing:"llm"}); }
   var q=String((body&&body.q)||"").trim().slice(0,200);
   if(!q){ return reply(origin,400,{error:"empty"}); }
