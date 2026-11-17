@@ -214,6 +214,31 @@ async function tshirtOrder(req,origin,body){
   var row=(await ir.json())[0]||{};
   return reply(origin,200,{ok:true,no:row.id,total:qty*c.price});
 }
+// ===== 麺部の予定・出欠（名前で参加／不参加を入れる） =====
+async function meetupsList(){
+  var since=new Date(Date.now()-7*24*3600*1000).toISOString().slice(0,10);
+  var r=await rest("menbu_meetups?day=gte."+since+"&select=id,day,title,note&order=day.asc");
+  var rows=r.ok?await r.json():[];
+  if(!rows.length){ return []; }
+  var ids=rows.map(function(x){ return x.id; }).join(",");
+  var rr=await rest("menbu_rsvp?meetup_id=in.("+ids+")&select=meetup_id,name,status&order=created_at.asc");
+  var rsvps=rr.ok?await rr.json():[];
+  return rows.map(function(m){
+    var yes=rsvps.filter(function(x){ return x.meetup_id===m.id&&x.status==="yes"; }).map(function(x){ return x.name; });
+    var no=rsvps.filter(function(x){ return x.meetup_id===m.id&&x.status==="no"; }).map(function(x){ return x.name; });
+    return {id:m.id,day:m.day,title:m.title,note:m.note,yes:yes,no:no};
+  });
+}
+async function rsvpSet(req,origin,body){
+  var mid=Number(body.meetup_id), name=clean(body.name,30), status=String(body.status||"");
+  if(!(Number.isInteger(mid)&&mid>0)){ return reply(origin,400,{error:"meetup"}); }
+  if(!name){ return reply(origin,400,{error:"name"}); }
+  if(status!=="yes"&&status!=="no"){ return reply(origin,400,{error:"status"}); }
+  var ih=await clientKey(req);
+  var ir=await rest("menbu_rsvp?on_conflict=meetup_id,name",{method:"POST",headers:{Prefer:"resolution=merge-duplicates"},body:JSON.stringify({meetup_id:mid,name:name,status:status,ip_hash:ih,updated_at:new Date().toISOString()})});
+  if(!ir.ok){ return reply(origin,502,{error:"save"}); }
+  return reply(origin,200,{ok:true});
+}
 Deno.serve(async function(req){
   var origin=req.headers.get("origin");
   if(req.method==="OPTIONS"){ return new Response(null,{status:204,headers:cors(origin)}); }
@@ -238,6 +263,9 @@ Deno.serve(async function(req){
       var okp=false;
       try{ var pr=await rest("rpc/menbu_gplaces_hit",{method:"POST",body:JSON.stringify({p_cap:GPLACES_DAY_CAP})}); okp=pr.ok&&(await pr.json())===true; }catch(e){}
       return reply(origin,200,{ok:okp});
+    }
+    if(sp.get("meetups")){
+      try{ return reply(origin,200,{meetups:await meetupsList()}); }catch(e){ console.error("meetups",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); }
     }
     if(new URL(req.url).searchParams.get("tshirt")){
       try{
@@ -280,6 +308,7 @@ Deno.serve(async function(req){
     }catch(e){ return reply(origin,502,{error:"upstream"}); }
   }
   if(body&&body.action==="tshirt"){ try{ return await tshirtOrder(req,origin,body); }catch(e){ console.error("tshirt",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); } }
+  if(body&&body.action==="rsvp"){ try{ return await rsvpSet(req,origin,body); }catch(e){ console.error("rsvp",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); } }
   if(!hasLlm){ return reply(origin,503,{error:"setup",missing:"llm"}); }
   var q=String((body&&body.q)||"").trim().slice(0,200);
   if(!q){ return reply(origin,400,{error:"empty"}); }
