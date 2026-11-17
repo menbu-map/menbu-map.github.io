@@ -162,12 +162,21 @@ li.menbu{border-left-color:var(--shu)}
 }
 
 .aihead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.evlist{gap:10px}
+.evlist li{flex-direction:column;align-items:stretch;gap:6px}
+.evhead .day{font-family:var(--brush);font-size:18px}
+.evnote{margin:0;font-size:13px;color:var(--sub)}
+.evbtns{display:flex;gap:8px}
+.evbtns button[aria-pressed="true"]{background:var(--sumi);color:#fff}
+.evcount{margin:0;font-size:13px;color:var(--sub)}
+.evnames{margin:0;font-size:12px;color:var(--sub);overflow-wrap:anywhere}
 </style>
 </head>
 <body>
 <header class="bar">
   <div class="brand"><svg class="crest sm" viewBox="0 0 100 100" aria-hidden="true"><defs><clipPath id="cc"><circle cx="50" cy="50" r="33"/></clipPath></defs><circle cx="50" cy="50" r="44" fill="none" stroke="#141414" stroke-width="9"/><g clip-path="url(#cc)"><rect width="100" height="100" fill="#141414"/><g fill="none" stroke="#fff" stroke-width="4.5" stroke-linecap="round"><path d="M8 37 q10.5 -9 21 0 t21 0 t21 0 t21 0"/><path d="M8 51 q10.5 -9 21 0 t21 0 t21 0 t21 0"/><path d="M8 65 q10.5 -9 21 0 t21 0 t21 0 t21 0"/></g><g stroke-linecap="round"><path d="M66 10 L45 92" stroke="#141414" stroke-width="8"/><path d="M76 13 L55 95" stroke="#141414" stroke-width="8"/><path d="M66 10 L45 92" stroke="#fff" stroke-width="3.2"/><path d="M76 13 L55 95" stroke="#fff" stroke-width="3.2"/></g></g></svg><span class="bt">麺部</span><span class="bs">MENBU MAP</span></div>
   <button type="button" id="openstamp" class="barbtn stampb" aria-label="巡礼の記録">巡礼 <span id="stampn">0</span></button>
+  <button type="button" id="openevent" class="barbtn" aria-label="予定と出欠">予定</button>
   <button type="button" id="openshop" class="barbtn">SHOP</button>
   <button type="button" id="openinfo" class="barbtn ib" aria-label="このマップについて">i</button>
 </header>
@@ -226,6 +235,12 @@ li.menbu{border-left-color:var(--shu)}
   <ul id="wantlist" class="stlist"></ul>
   <h3 class="sth">麺部の店</h3>
   <ul id="stamplist" class="stlist"></ul>
+</section>
+<section id="eventpanel" class="panel" role="dialog" aria-modal="true" aria-labelledby="eventh" hidden>
+  <div class="phead"><h2 id="eventh">予定・出欠</h2><button type="button" class="xbtn" data-close aria-label="閉じる">×</button></div>
+  <div class="ts"><label for="evname">お名前（LINEの表示名）<input id="evname" type="text" maxlength="30" autocomplete="nickname"></label></div>
+  <p id="eventnone" class="shopnone" hidden>いま予定はありません。</p>
+  <ul id="eventlist" class="evlist"></ul>
 </section>
 <section id="infopanel" class="panel" role="dialog" aria-modal="true" aria-labelledby="infoh" hidden>
   <div class="phead"><h2 id="infoh">麺部マップについて</h2><button type="button" class="xbtn" data-close aria-label="閉じる">×</button></div>
@@ -755,6 +770,50 @@ document.getElementById("find").addEventListener("submit",function(ev){
     }).catch(function(){ go.disabled=false; st.textContent="送れませんでした。通信の状態を確かめて、もう一度お試しください。"; });
   });
 })();
+// ===== 麺部の予定・出欠（名前で参加／不参加を入れる） =====
+(function(){
+  var API="https://uvdodybrxmllldazdtbu.supabase.co/functions/v1/menbu-ask";
+  var list=document.getElementById("eventlist"), none=document.getElementById("eventnone"), nameEl=document.getElementById("evname");
+  try{ nameEl.value=localStorage.getItem("menbu_name")||""; }catch(e){}
+  function fmtDay(d){ return String(d||"").replace(/^(\d+)-(\d+)-(\d+)$/,function(_,y,m,dd){ return Number(m)+"月"+Number(dd)+"日"; }); }
+  function send(mid,status,btns,msg){
+    var name=nameEl.value.trim();
+    if(!name){ msg.textContent="お名前を入れてください。"; return; }
+    try{ localStorage.setItem("menbu_name",name); }catch(e){}
+    btns.forEach(function(b){ b.disabled=true; });
+    msg.textContent="送っています…";
+    fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"rsvp",meetup_id:mid,name:name,status:status})}).then(function(r){ return r.json().then(function(j){ return {code:r.status,j:j}; }); }).then(function(x){
+      btns.forEach(function(b){ b.disabled=false; });
+      if(x.code===200){ msg.textContent=""; load(); return; }
+      msg.textContent="送れませんでした。入力を確かめて、もう一度お試しください。";
+    }).catch(function(){ btns.forEach(function(b){ b.disabled=false; }); msg.textContent="送れませんでした。通信の状態を確かめてください。"; });
+  }
+  function load(){
+    fetch(API+"?meetups=1").then(function(r){ return r.json(); }).then(function(j){
+      var rows=(j&&j.meetups)||[];
+      list.textContent=""; none.hidden=!!rows.length;
+      rows.forEach(function(m){
+        var li=el("li");
+        var head=el("div","evhead"); head.appendChild(el("span","day",fmtDay(m.day)+" "+m.title)); li.appendChild(head);
+        if(m.note){ li.appendChild(el("p","evnote",m.note)); }
+        var name=nameEl.value.trim();
+        var mine=name?(m.yes.indexOf(name)>=0?"yes":(m.no.indexOf(name)>=0?"no":"")):"";
+        var btns=el("div","evbtns"), msg=el("p","dmsg");
+        var yb=el("button",null,"参加"); yb.type="button"; yb.setAttribute("aria-pressed",String(mine==="yes"));
+        var nb=el("button",null,"不参加"); nb.type="button"; nb.setAttribute("aria-pressed",String(mine==="no"));
+        yb.addEventListener("click",function(){ send(m.id,"yes",[yb,nb],msg); });
+        nb.addEventListener("click",function(){ send(m.id,"no",[yb,nb],msg); });
+        btns.appendChild(yb); btns.appendChild(nb); li.appendChild(btns);
+        li.appendChild(el("p","evcount","参加 "+m.yes.length+"人・不参加 "+m.no.length+"人"));
+        if(m.yes.length){ li.appendChild(el("p","evnames","参加："+m.yes.join("、"))); }
+        li.appendChild(msg);
+        list.appendChild(li);
+      });
+    }).catch(function(){});
+  }
+  nameEl.addEventListener("change",function(){ try{ localStorage.setItem("menbu_name",nameEl.value.trim()); }catch(e){} load(); });
+  window.__loadEvents=load;
+})();
 var DCACHE={};
 function attrLink(a){
   if(!a){ return null; }
@@ -998,7 +1057,7 @@ window.addEventListener("resize",function(){ setSheet(sheetState); if(M.resize){
 })();
 // SHOP・このマップについて・麺AIの窓（どれかひとつだけ開く）
 (function(){
-  var ids=["shoppanel","infopanel","aipanel","stamppanel"], aib=document.getElementById("aiopen");
+  var ids=["shoppanel","infopanel","aipanel","stamppanel","eventpanel"], aib=document.getElementById("aiopen");
   function closeAll(){ ids.forEach(function(id){ document.getElementById(id).hidden=true; }); aib.setAttribute("aria-expanded","false"); if(location.hash==="#shop"){ history.replaceState(null,"",location.pathname+location.search); } }
   function open(id){
     closeAll(); var p=document.getElementById(id); p.hidden=false;
@@ -1009,6 +1068,7 @@ window.addEventListener("resize",function(){ setSheet(sheetState); if(M.resize){
   document.getElementById("openshop").addEventListener("click",function(){ open("shoppanel"); });
   document.getElementById("openinfo").addEventListener("click",function(){ open("infopanel"); });
   document.getElementById("openstamp").addEventListener("click",function(){ renderStamps(); open("stamppanel"); track("stamps"); });
+  document.getElementById("openevent").addEventListener("click",function(){ if(window.__loadEvents){ window.__loadEvents(); } open("eventpanel"); });
   window.__closePanels=closeAll;
   aib.addEventListener("click",function(){ if(document.getElementById("aipanel").hidden){ open("aipanel"); } else { closeAll(); } });
   document.getElementById("aiclose").addEventListener("click",closeAll);
