@@ -170,6 +170,11 @@ li.menbu{border-left-color:var(--shu)}
 .evbtns button[aria-pressed="true"]{background:var(--sumi);color:#fff}
 .evcount{margin:0;font-size:13px;color:var(--sub)}
 .evnames{margin:0;font-size:12px;color:var(--sub);overflow-wrap:anywhere}
+
+#infopanel .credit{margin:14px 0 8px;font-size:13px;line-height:1.8}
+#infopanel details.terms{margin:8px 0;border-top:1px solid #ddd;padding-top:8px;font-size:13px}
+#infopanel details.terms summary{font-weight:700;cursor:pointer;padding:6px 0}
+#infopanel details.terms ol,#infopanel details.terms ul{margin:6px 0 0;padding-left:1.4em;line-height:1.7}
 </style>
 </head>
 <body>
@@ -247,6 +252,29 @@ li.menbu{border-left-color:var(--shu)}
   <p>朱色の印は、麺部のLINEに上がった店（巡礼の店）です。黒い印は、まだ麺部の投稿がない店です。</p>
   <p>麺部の店かどうかは店名で判定しているので、同じ名前の別の店に朱色の印がつくことがあります。</p>
   <p class="small"><span id="mapattr">地図：国土地理院。</span>ほかの麺の店：Google マップ、ホットペッパーグルメ Webサービス、OpenStreetMap。</p>
+  <p class="credit"><b>制作</b>　株式会社START RIGHT<br><b>運営</b>　麺部「MENBU（旧SOBABU）」</p>
+  <details class="terms"><summary>利用規約</summary>
+    <ol>
+      <li>麺部マップは、麺部が無料で提供する、麺の店を探すための地図です。</li>
+      <li>店の場所・営業時間・休業日・メニュー・価格は、変わることがあります。お出かけの前に、店の公式の情報で確かめてください。</li>
+      <li>店の情報は、麺部の投稿と、Google マップ、ホットペッパーグルメ、OpenStreetMap などの外部の情報をもとにしています。正確さや最新であることは保証しません。</li>
+      <li>麺AIの答えは、AIが作ります。まちがいを含むことがあります。</li>
+      <li>地図の使用中に起きた損害・トラブルについて、制作者と麺部は責任を負いません。道路や店では、交通ルールと店のルールを守ってください。</li>
+      <li>他人の迷惑になる使い方、サーバーに負担をかける使い方（自動での大量アクセスなど）、法令や公序良俗に反する使い方は禁止します。</li>
+      <li>「情報がちがう」の報告に、個人情報や悪口は書かないでください。</li>
+      <li>この規約は、予告なく変えることがあります。</li>
+    </ol>
+  </details>
+  <details class="terms"><summary>データの扱い</summary>
+    <ul>
+      <li>現在地は、近くの店を探すためだけに使います。保存しません。</li>
+      <li>使われ方は、「開いた回数」「検索」などの回数だけを、名前や場所と結びつけずに数えます。</li>
+      <li>「行った」「行きたい」の記録は、このスマホ（ブラウザ）の中だけに保存します。サーバーには送りません。</li>
+      <li>「情報がちがう」の報告には、店の名前・場所・理由だけを送ります。</li>
+      <li>地図の表示と店の検索のため、Google・ホットペッパー・OpenStreetMap・国土地理院の各サービスに通信します。</li>
+    </ul>
+  </details>
+  <p class="small">© 株式会社START RIGHT / 麺部</p>
 </section>
 <div id="welcome" class="welcome" hidden>
   <div class="wcard">
