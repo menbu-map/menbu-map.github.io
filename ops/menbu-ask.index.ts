@@ -163,14 +163,15 @@ async function hpNear(key,lat,lon,r,kw){
     return (j&&j.results&&Array.isArray(j.results.shop))?j.results.shop:[];
   }
   // 味の言葉（豚骨・味噌など）があれば、ラーメンの店をその言葉で探した結果を先に入れて「合う店」の印をつける
-  // パスタは「イタリアン・フレンチ」ジャンル（G006）をラーメン同様に丸ごと検索する（名前に「パスタ」が無い店も、Googleマップ並みに拾うため）
+  // そば・うどんにはラーメンのような専用ジャンルコードが無いため、ホットペッパーのキーワード検索（店名・ジャンル・紹介文を横断）をそのまま使う。
+  // パスタは「イタリアン・フレンチ」ジャンル（G006）を、ラーメン（G013）と同じく丸ごと検索する。
+  // どの一覧も、店名だけで絞り込み直すと取りこぼすので、ホットペッパー自身の検索結果をそのまま信用する（Googleマップ並みに拾うため）
   var lists=await Promise.all([kw?call({genre:"G013",keyword:kw}).catch(function(){ return []; }):Promise.resolve([]),call({genre:"G013"}),call({keyword:"そば"}).catch(function(){ return []; }),call({keyword:"うどん"}).catch(function(){ return []; }),call({genre:"G006"}).catch(function(){ return []; })]);
   var seen={}, out=[];
   lists.forEach(function(arr,li0){
     var li=li0===0?0:li0-1, hitKw=li0===0;
     arr.forEach(function(s){
       if(seen[s.id]){ return; }
-      if((li===1||li===2)&&!/そば|蕎麦|ソバ|うどん|饂飩|ウドン|麺|パスタ|スパゲティ|スパゲッティ/.test(String(s.name||""))){ return; }
       seen[s.id]=1;
       var la=Number(s.lat), lo=Number(s.lng);
       if(!Number.isFinite(la)||!Number.isFinite(lo)){ return; }
