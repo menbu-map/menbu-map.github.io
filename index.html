@@ -219,7 +219,7 @@ li.menbu{border-left-color:var(--shu)}
     <h2 id="tstitle">麺部Tシャツ 予約</h2>
     <p id="tsinfo" class="tsinfo"></p>
     <form id="tsform">
-      <label for="tsname">お名前（LINEの表示名）<input id="tsname" type="text" maxlength="30" autocomplete="nickname" required></label>
+      <label for="tsname">お名前（ニックネームでOK。ほかの人には見えません）<input id="tsname" type="text" maxlength="30" autocomplete="nickname" required></label>
       <div class="tsrow">
         <label for="tssize">サイズ<select id="tssize" required></select></label>
         <label for="tscolor" id="tscolorwrap" hidden>色<select id="tscolor"></select></label>
@@ -243,7 +243,7 @@ li.menbu{border-left-color:var(--shu)}
 </section>
 <section id="eventpanel" class="panel" role="dialog" aria-modal="true" aria-labelledby="eventh" hidden>
   <div class="phead"><h2 id="eventh">予定・出欠</h2><button type="button" class="xbtn" data-close aria-label="閉じる">×</button></div>
-  <div class="ts"><label for="evname">お名前（LINEの表示名）<input id="evname" type="text" maxlength="30" autocomplete="nickname"></label></div>
+  <div class="ts"><label for="evname">お名前（ニックネームでOK。ほかの人には見えません）<input id="evname" type="text" maxlength="30" autocomplete="nickname"></label></div>
   <p id="eventnone" class="shopnone" hidden>いま予定はありません。</p>
   <ul id="eventlist" class="evlist"></ul>
 </section>
@@ -270,7 +270,7 @@ li.menbu{border-left-color:var(--shu)}
       <li>現在地は、近くの店を探すためだけに使います。保存しません。</li>
       <li>使われ方は、「開いた回数」「検索」などの回数だけを、名前や場所と結びつけずに数えます。</li>
       <li>「行った」「行きたい」の記録は、このスマホ（ブラウザ）の中だけに保存します。サーバーには送りません。</li>
-      <li>「予定」の出欠に入れた名前と参加・不参加は保存し、予定の画面で参加者に表示します。本名や個人を特定できる情報は入れないでください。</li>
+      <li>「予定」の出欠に入れた名前と参加・不参加は保存します。画面に出るのは参加・不参加の人数だけで、名前はほかの人に表示しません。</li>
       <li>「情報がちがう」の報告には、店の名前・場所・理由だけを送ります。</li>
       <li>地図の表示と店の検索のため、Google・ホットペッパー・OpenStreetMap・国土地理院の各サービスに通信します。</li>
     </ul>
@@ -804,6 +804,7 @@ document.getElementById("find").addEventListener("submit",function(ev){
   var API="https://uvdodybrxmllldazdtbu.supabase.co/functions/v1/menbu-ask";
   var list=document.getElementById("eventlist"), none=document.getElementById("eventnone"), nameEl=document.getElementById("evname");
   try{ nameEl.value=localStorage.getItem("menbu_name")||""; }catch(e){}
+  function myRsvp(){ try{ return JSON.parse(localStorage.getItem("menbu_rsvp")||"{}")||{}; }catch(e){ return {}; } }
   function fmtDay(d){ return String(d||"").replace(/^(\d+)-(\d+)-(\d+)$/,function(_,y,m,dd){ return Number(m)+"月"+Number(dd)+"日"; }); }
   function send(mid,status,btns,msg){
     var name=nameEl.value.trim();
@@ -813,7 +814,7 @@ document.getElementById("find").addEventListener("submit",function(ev){
     msg.textContent="送っています…";
     fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"rsvp",meetup_id:mid,name:name,status:status})}).then(function(r){ return r.json().then(function(j){ return {code:r.status,j:j}; }); }).then(function(x){
       btns.forEach(function(b){ b.disabled=false; });
-      if(x.code===200){ msg.textContent=""; load(); return; }
+      if(x.code===200){ var mm=myRsvp(); mm[mid]=status; try{ localStorage.setItem("menbu_rsvp",JSON.stringify(mm)); }catch(e){} msg.textContent=""; load(); return; }
       msg.textContent="送れませんでした。入力を確かめて、もう一度お試しください。";
     }).catch(function(){ btns.forEach(function(b){ b.disabled=false; }); msg.textContent="送れませんでした。通信の状態を確かめてください。"; });
   }
@@ -826,15 +827,14 @@ document.getElementById("find").addEventListener("submit",function(ev){
         var head=el("div","evhead"); head.appendChild(el("span","day",fmtDay(m.day)+" "+m.title)); li.appendChild(head);
         if(m.note){ li.appendChild(el("p","evnote",m.note)); }
         var name=nameEl.value.trim();
-        var mine=name?(m.yes.indexOf(name)>=0?"yes":(m.no.indexOf(name)>=0?"no":"")):"";
+        var mine=myRsvp()[m.id]||"";
         var btns=el("div","evbtns"), msg=el("p","dmsg");
         var yb=el("button",null,"参加"); yb.type="button"; yb.setAttribute("aria-pressed",String(mine==="yes"));
         var nb=el("button",null,"不参加"); nb.type="button"; nb.setAttribute("aria-pressed",String(mine==="no"));
         yb.addEventListener("click",function(){ send(m.id,"yes",[yb,nb],msg); });
         nb.addEventListener("click",function(){ send(m.id,"no",[yb,nb],msg); });
         btns.appendChild(yb); btns.appendChild(nb); li.appendChild(btns);
-        li.appendChild(el("p","evcount","参加 "+m.yes.length+"人・不参加 "+m.no.length+"人"));
-        if(m.yes.length){ li.appendChild(el("p","evnames","参加："+m.yes.join("、"))); }
+        li.appendChild(el("p","evcount","参加 "+m.yes+"人・不参加 "+m.no+"人"));
         li.appendChild(msg);
         list.appendChild(li);
       });

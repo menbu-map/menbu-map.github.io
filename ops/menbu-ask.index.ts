@@ -224,8 +224,9 @@ async function meetupsList(){
   var rr=await rest("menbu_rsvp?meetup_id=in.("+ids+")&select=meetup_id,name,status&order=created_at.asc");
   var rsvps=rr.ok?await rr.json():[];
   return rows.map(function(m){
-    var yes=rsvps.filter(function(x){ return x.meetup_id===m.id&&x.status==="yes"; }).map(function(x){ return x.name; });
-    var no=rsvps.filter(function(x){ return x.meetup_id===m.id&&x.status==="no"; }).map(function(x){ return x.name; });
+    // 公開ページには名前を出さない。人数だけ返す
+    var yes=rsvps.filter(function(x){ return x.meetup_id===m.id&&x.status==="yes"; }).length;
+    var no=rsvps.filter(function(x){ return x.meetup_id===m.id&&x.status==="no"; }).length;
     return {id:m.id,day:m.day,title:m.title,note:m.note,yes:yes,no:no};
   });
 }
