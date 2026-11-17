@@ -179,6 +179,12 @@ li.menbu{border-left-color:var(--shu)}
 .pkpt{margin-left:auto;font-weight:700;color:var(--shu)}
 #pointlist li{cursor:default}
 #pointlist li.me{background:rgba(0,0,0,.04);border-radius:8px}
+.photoform{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.photoform input{width:100%}
+.photolist{margin:8px 0 0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.photolist li{font-size:13px;border-left:3px solid var(--shu);padding:4px 8px;background:rgba(0,0,0,.02)}
+.photolist .pn{font-weight:700;margin-right:4px}
+.photolist .pc{color:var(--sub)}
 </style>
 </head>
 <body>
@@ -982,7 +988,43 @@ function selectShop(x,fromList){
   var ln=el("a","line","LINEで送る"); ln.href="https://line.me/R/share?text="+encodeURIComponent(x.name+"\n"+link+"\n（麺部マップより）"); ln.target="_blank"; ln.rel="noopener"; ln.addEventListener("click",function(){ track("share_line"); });
   var cp=el("button",null,"リンクをコピー"); cp.type="button"; cp.addEventListener("click",function(){ copyText(link,msg); track("share_copy"); });
   var rb=el("button",null,"情報がちがう"); rb.type="button";
-  more.appendChild(ln); more.appendChild(cp); more.appendChild(rb); box.appendChild(more);
+  var pb=el("button",null,"写真を投稿（ポイント）"); pb.type="button";
+  more.appendChild(ln); more.appendChild(cp); more.appendChild(pb); more.appendChild(rb); box.appendChild(more);
+  // 写真投稿（写真そのものは預からず、Googleフォトの共有リンクだけを受け取る。投稿すると麺部ポイントが貯まる）
+  var pf=el("div","photoform"); pf.hidden=true;
+  var pfName=el("input"); pfName.type="text"; pfName.maxLength=30; pfName.placeholder="お名前（LINEの表示名）"; pfName.setAttribute("aria-label","お名前");
+  try{ pfName.value=localStorage.getItem("menbu_name")||""; }catch(e){}
+  var pfUrl=el("input"); pfUrl.type="url"; pfUrl.maxLength=300; pfUrl.placeholder="Googleフォトの共有リンク（https://photos.app.goo.gl/… など）"; pfUrl.setAttribute("aria-label","Googleフォトのリンク");
+  var pfComment=el("input"); pfComment.type="text"; pfComment.maxLength=100; pfComment.placeholder="ひとこと（任意）"; pfComment.setAttribute("aria-label","ひとこと");
+  var pfGo=el("button",null,"送る"); pfGo.type="button";
+  var pfMsg=el("p","dmsg");
+  pf.appendChild(pfName); pf.appendChild(pfUrl); pf.appendChild(pfComment); pf.appendChild(pfGo); pf.appendChild(pfMsg);
+  var pl=el("ul","photolist");
+  box.appendChild(pf); box.appendChild(pl);
+  function loadPhotos(){
+    fetch(API_NEAR+"?photos=1&key="+encodeURIComponent(stampKey(x))).then(function(r){ return r.json(); }).then(function(j){
+      pl.textContent="";
+      ((j&&j.photos)||[]).forEach(function(p){
+        var li=el("li"); li.appendChild(el("span","pn",p.name+"："));
+        var a=el("a",null,"写真を見る"); a.href=p.url; a.target="_blank"; a.rel="noopener"; li.appendChild(a);
+        if(p.comment){ li.appendChild(el("span","pc"," ・"+p.comment)); }
+        pl.appendChild(li);
+      });
+    }).catch(function(){});
+  }
+  pb.addEventListener("click",function(){ pf.hidden=!pf.hidden; if(!pf.hidden){ loadPhotos(); } });
+  pfGo.addEventListener("click",function(){
+    var name=pfName.value.trim(), url=pfUrl.value.trim(), comment=pfComment.value.trim();
+    if(!name){ pfMsg.textContent="お名前を入れてください。"; return; }
+    if(!/^https:\/\/(photos\.app\.goo\.gl\/|photos\.google\.com\/)/i.test(url)){ pfMsg.textContent="Googleフォトの共有リンクを貼ってください。"; return; }
+    try{ localStorage.setItem("menbu_name",name); }catch(e){}
+    pfGo.disabled=true; pfMsg.textContent="送っています…";
+    fetch(API_NEAR,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"photo",name:name,shopKey:stampKey(x),shopName:x.name,url:url,comment:comment})}).then(function(r){
+      pfGo.disabled=false;
+      if(r.ok){ pfMsg.textContent="ありがとうございます。ポイントに追加しました。"; pfUrl.value=""; pfComment.value=""; loadPhotos(); return; }
+      pfMsg.textContent=r.status===429?"今日はこれ以上送れません。":(r.status===400?"リンクかお名前を確かめてください。":"送れませんでした。少し待ってもう一度お試しください。");
+    }).catch(function(){ pfGo.disabled=false; pfMsg.textContent="送れませんでした。通信の状態を確かめてください。"; });
+  });
   var rp=el("div","rep"); rp.hidden=true;
   var sel=el("select"); ["閉店している","場所がちがう","麺の店ではない","その他"].forEach(function(v){ var o=el("option",null,v); o.value=v; sel.appendChild(o); });
   sel.setAttribute("aria-label","ちがう点");

@@ -181,9 +181,11 @@ async function hpNear(key,lat,lon,r,kw){
   return out;
 }
 // ===== 麺部Tシャツの予約（部員向け。支払いは例会で手渡し） =====
-var EV_OK = {visit:1,search:1,card:1,route:1,share_line:1,share_copy:1,share_open:1,zero:1,went:1,want:1,stamps:1,ai:1,points:1};
+var EV_OK = {visit:1,search:1,card:1,route:1,share_line:1,share_copy:1,share_open:1,zero:1,went:1,want:1,stamps:1,ai:1,points:1,photo:1};
 var REPORT_REASONS = ["閉店している","場所がちがう","麺の店ではない","その他"];
 var TS_IP_CAP = 5; // 同じ相手からの予約は1日5件まで
+var PHOTO_IP_CAP = 10; // 同じ相手からの写真投稿は1日10件まで
+var PHOTO_URL_RE = /^https:\/\/(photos\.app\.goo\.gl\/|photos\.google\.com\/)/i; // Googleフォトのリンクだけ受け付ける
 function jstToday(){ return new Date(Date.now()+9*3600*1000).toISOString().slice(0,10); }
 async function tshirtConfig(){
   var r=await rest("menbu_tshirt_config?id=eq.1&select=open,title,price,deadline,sizes,colors,handover,note");
@@ -261,6 +263,25 @@ async function visitSet(req,origin,body){
   if(on){ await pointAward(name,"visit",key); } else { await pointRevoke(name,"visit",key); }
   return reply(origin,200,{ok:true});
 }
+// ===== 麺部ポイント（写真投稿。写真そのものは預からず、Googleフォトのリンクだけを受け取る） =====
+async function photosList(shopKey){
+  var r=await rest("menbu_photos?shop_key=eq."+encodeURIComponent(shopKey)+"&select=name,url,comment,created_at&order=created_at.desc&limit=20");
+  return r.ok?await r.json():[];
+}
+async function photoAdd(req,origin,body){
+  var name=clean(body.name,30), shopKey=clean(body.shopKey,120), shopName=clean(body.shopName,60), url=clean(body.url,300), comment=clean(body.comment,100);
+  if(!name||!shopKey||!shopName){ return reply(origin,400,{error:"bad"}); }
+  if(!PHOTO_URL_RE.test(url)){ return reply(origin,400,{error:"url"}); }
+  var ih=await clientKey(req), since=new Date(Date.now()-24*3600*1000).toISOString();
+  var cr=await rest("menbu_photos?ip_hash=eq."+ih+"&created_at=gte."+encodeURIComponent(since)+"&select=id");
+  var recent=cr.ok?await cr.json():[];
+  if(recent.length>=PHOTO_IP_CAP){ return reply(origin,429,{error:"cap"}); }
+  var ir=await rest("menbu_photos",{method:"POST",headers:{Prefer:"return=representation"},body:JSON.stringify({name:name,shop_key:shopKey,shop_name:shopName,url:url,comment:comment,ip_hash:ih})});
+  if(!ir.ok){ return reply(origin,502,{error:"save"}); }
+  var row=(await ir.json())[0]||{};
+  if(row.id!=null){ await pointAward(name,"photo",String(row.id)); }
+  return reply(origin,200,{ok:true});
+}
 Deno.serve(async function(req){
   var origin=req.headers.get("origin");
   if(req.method==="OPTIONS"){ return new Response(null,{status:204,headers:cors(origin)}); }
@@ -291,6 +312,11 @@ Deno.serve(async function(req){
     }
     if(sp.get("points")){
       try{ return reply(origin,200,{points:await pointsTotals()}); }catch(e){ console.error("points",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); }
+    }
+    if(sp.get("photos")){
+      var pk=String(sp.get("key")||"").slice(0,120);
+      if(!pk){ return reply(origin,400,{error:"key"}); }
+      try{ return reply(origin,200,{photos:await photosList(pk)}); }catch(e){ console.error("photos",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); }
     }
     if(new URL(req.url).searchParams.get("tshirt")){
       try{
@@ -335,6 +361,7 @@ Deno.serve(async function(req){
   if(body&&body.action==="tshirt"){ try{ return await tshirtOrder(req,origin,body); }catch(e){ console.error("tshirt",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); } }
   if(body&&body.action==="rsvp"){ try{ return await rsvpSet(req,origin,body); }catch(e){ console.error("rsvp",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); } }
   if(body&&body.action==="visit"){ try{ return await visitSet(req,origin,body); }catch(e){ console.error("visit",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); } }
+  if(body&&body.action==="photo"){ try{ return await photoAdd(req,origin,body); }catch(e){ console.error("photo",String((e&&e.message)||e)); return reply(origin,502,{error:"upstream"}); } }
   if(!hasLlm){ return reply(origin,503,{error:"setup",missing:"llm"}); }
   var q=String((body&&body.q)||"").trim().slice(0,200);
   if(!q){ return reply(origin,400,{error:"empty"}); }
